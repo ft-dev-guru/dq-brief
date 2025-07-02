@@ -10,8 +10,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  minimumScale: 1,
+  maximumScale: 5,
+  userScalable: true,
   themeColor: '#000000',
 }
 
@@ -29,16 +30,29 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <style dangerouslySetInnerHTML={{
           __html: `
-            html, body {
-              overflow-x: hidden;
-              width: 100%;
-              max-width: 100%;
+            html {
+              font-size: 16px;
               -webkit-text-size-adjust: 100%;
               -ms-text-size-adjust: 100%;
               text-size-adjust: 100%;
             }
+            body {
+              overflow-x: hidden;
+              width: 100%;
+              max-width: 100%;
+              margin: 0;
+              padding: 0;
+              font-size: 16px;
+            }
             * {
               box-sizing: border-box;
+            }
+            /* Ensure modals and fixed elements scale properly */
+            .modal-overlay {
+              position: fixed !important;
+              inset: 0 !important;
+              width: 100vw !important;
+              height: 100vh !important;
             }
           `
         }} />
