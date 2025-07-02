@@ -1,0 +1,205 @@
+.battlefield-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: #0a0a0a;
+  color: #fff;
+  overflow: hidden;
+}
+
+.coordinates,
+.timestamp {
+  position: fixed;
+  font-size: 10px;
+  opacity: 0.7;
+  z-index: 10;
+}
+.coordinates {
+  top: 20px;
+  right: 20px;
+}
+.timestamp {
+  bottom: 20px;
+  left: 20px;
+}
+
+.map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: rgba(0, 0, 0, 0.8);
+  border-bottom: 2px solid #ff6b00;
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.nav-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: 1px solid #ff6b00;
+  color: #ff6b00;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 12px;
+}
+.nav-button:hover {
+  background: rgba(255, 107, 0, 0.1);
+}
+
+.header-title-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.map-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ff6b00;
+  letter-spacing: 2px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
+  color: #00ff41;
+}
+
+.status-indicator .pulse {
+  width: 8px;
+  height: 8px;
+  background-color: #00ff41;
+  border-radius: 50%;
+  animation: pulse-green 2s infinite;
+}
+
+@keyframes pulse-green {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 255, 65, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 255, 65, 0);
+  }
+}
+
+.map-container {
+  flex-grow: 1;
+  position: relative;
+}
+
+.map-image-background {
+  z-index: 1;
+  filter: grayscale(80%) contrast(1.1) brightness(0.6);
+  opacity: 0.9;
+}
+
+.map-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, transparent 60%, rgba(0, 0, 0, 0.9) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.connector-lines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.checkpoint {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  z-index: 4;
+  cursor: pointer;
+}
+
+.checkpoint-pin {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-icon {
+  color: #ff6b00;
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 5px #ff6b00);
+  transition: all 0.3s ease;
+}
+
+.checkpoint:hover .pin-icon {
+  color: #ff9c54;
+  transform: scale(1.2);
+}
+
+.pin-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #ff6b00;
+  animation: pulse-orange 2s infinite;
+  z-index: -1;
+}
+
+@keyframes pulse-orange {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.checkpoint-label {
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #ff6b00;
+  padding: 8px 12px;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.label-id {
+  color: #ff6b00;
+  font-weight: 700;
+}
+
+.label-name {
+  color: #fff;
+  font-size: 14px;
+}
