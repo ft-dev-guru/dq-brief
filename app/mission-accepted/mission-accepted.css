@@ -417,29 +417,274 @@
 }
 
 @media (max-width: 768px) {
+  .dependencies-page-body {
+    overflow-x: hidden;
+  }
+
+  .briefing-header {
+    padding: 15px;
+  }
+
+  .briefing-classification {
+    font-size: 14px;
+    letter-spacing: 1px;
+  }
+
+  .briefing-title {
+    font-size: 20px;
+    letter-spacing: 1px;
+  }
+
+  .briefing-subtitle {
+    font-size: 14px;
+  }
+
   .container {
     padding: 20px 15px;
   }
 
+  .mission-directive {
+    padding: 20px 15px;
+    margin-bottom: 25px;
+  }
+
+  .directive-quote {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .directive-emphasis {
+    font-size: 14px;
+  }
+
+  .sequence-analysis {
+    padding: 20px 15px;
+    margin: 25px 0;
+  }
+
+  .analysis-intro {
+    font-size: 15px;
+    margin-bottom: 25px;
+  }
+
+  .dependency-chain {
+    gap: 20px;
+  }
+
   .dependency-step {
-    padding: 25px 20px;
+    padding: 20px 15px;
+  }
+
+  .step-header {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+
+  .step-sequence {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .step-title {
+    font-size: 14px;
+  }
+
+  .step-designation {
+    font-size: 11px;
   }
 
   .step-content {
-    padding-left: 20px;
+    font-size: 13px;
+    padding-left: 0;
+    margin-top: 15px;
   }
 
   .step-rationale {
-    margin-left: 20px;
+    margin-left: 0;
+    margin-top: 15px;
+    padding: 12px;
+  }
+
+  .rationale-label {
+    font-size: 10px;
+  }
+
+  .rationale-text {
+    font-size: 11px;
+  }
+
+  .connection-arrow {
+    padding: 8px 0;
+  }
+
+  .arrow-symbol {
+    font-size: 16px;
+  }
+
+  .strategic-conclusion {
+    padding: 20px 15px;
+    margin: 25px 0;
+  }
+
+  .conclusion-text {
+    font-size: 14px;
+  }
+
+  .conclusion-emphasis {
+    font-size: 16px;
   }
 
   .navigation {
     flex-direction: column;
-    gap: 20px;
+    gap: 15px;
+    padding: 20px 15px;
   }
 
-  .briefing-title {
-    font-size: 24px;
+  .nav-button {
+    padding: 12px 20px;
+    font-size: 12px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .coordinates,
+  .timestamp {
+    font-size: 10px;
+    padding: 8px 12px;
+  }
+
+  .tactical-audio-player {
+    padding: 15px;
+    margin: 20px 0;
+  }
+
+  .audio-title {
+    font-size: 12px;
+  }
+
+  .waveform-container {
+    height: 80px;
+  }
+
+  .audio-overlay {
+    gap: 8px;
+    padding: 10px 12px;
+  }
+
+  .play-button {
+    width: 40px;
+    height: 40px;
+  }
+
+  .audio-info {
+    gap: 8px;
+  }
+
+  .time-display {
+    font-size: 11px;
+    gap: 6px;
+  }
+
+  .tactical-controls {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .progress-section {
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .time-current,
+  .time-remaining {
+    font-size: 10px;
+    min-width: 50px;
+  }
+
+  .control-buttons {
+    gap: 8px;
+  }
+
+  .control-btn {
+    width: 35px;
+    height: 35px;
+  }
+
+  .play-pause-main {
+    width: 45px;
+    height: 45px;
+  }
+
+  .skip-back,
+  .skip-forward {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 15px 10px;
+  }
+
+  .mission-directive {
+    padding: 15px 10px;
+  }
+
+  .sequence-analysis {
+    padding: 15px 10px;
+  }
+
+  .directive-quote {
+    font-size: 14px;
+  }
+
+  .analysis-intro {
+    font-size: 13px;
+  }
+
+  .dependency-step {
+    padding: 15px 10px;
+  }
+
+  .step-title {
+    font-size: 12px;
+  }
+
+  .step-content {
+    font-size: 12px;
+  }
+
+  .rationale-text {
+    font-size: 10px;
+  }
+
+  .conclusion-text {
+    font-size: 12px;
+  }
+
+  .tactical-audio-player {
+    padding: 12px;
+  }
+
+  .waveform-container {
+    height: 60px;
+  }
+
+  .play-button {
+    width: 35px;
+    height: 35px;
+  }
+
+  .control-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .play-pause-main {
+    width: 40px;
+    height: 40px;
   }
 }
 
@@ -773,69 +1018,4 @@
 .skip-back,
 .skip-forward {
   padding: 10px;
-}
-
-/* Responsive adjustments for audio player */
-@media (max-width: 768px) {
-  .tactical-audio-player {
-    padding: 16px;
-    margin: 30px 0;
-  }
-  
-  .audio-title {
-    font-size: 16px;
-  }
-  
-  .waveform-container {
-    height: 100px;
-  }
-  
-  .audio-overlay {
-    padding: 12px 16px;
-  }
-  
-  .play-button {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .audio-info {
-    align-items: center;
-  }
-  
-  .time-display {
-    font-size: 14px;
-  }
-  
-  .tactical-controls {
-    padding: 12px 15px;
-  }
-  
-  .progress-section {
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-  
-  .time-current,
-  .time-total {
-    font-size: 12px;
-    min-width: 40px;
-  }
-  
-  .control-buttons {
-    gap: 15px;
-  }
-  
-  .control-btn {
-    padding: 10px;
-  }
-  
-  .play-pause-main {
-    padding: 12px;
-  }
-  
-  .skip-back,
-  .skip-forward {
-    padding: 8px;
-  }
 }

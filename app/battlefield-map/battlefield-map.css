@@ -203,3 +203,175 @@
   color: #fff;
   font-size: 14px;
 }
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .battlefield-page {
+    overflow-x: hidden;
+  }
+
+  .coordinates,
+  .timestamp {
+    font-size: 9px;
+    padding: 5px 8px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 3px;
+  }
+
+  .coordinates {
+    top: 10px;
+    right: 10px;
+  }
+
+  .timestamp {
+    bottom: 10px;
+    left: 10px;
+  }
+
+  .map-header {
+    padding: 15px 20px;
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .header-title-container {
+    order: 1;
+    justify-content: center;
+  }
+
+  .map-title {
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+
+  .nav-button {
+    padding: 10px 15px;
+    font-size: 11px;
+    align-self: center;
+    order: 2;
+  }
+
+  .status-indicator {
+    font-size: 10px;
+    justify-content: center;
+    order: 3;
+  }
+
+  .checkpoint {
+    transform: translate(-50%, -50%);
+  }
+
+  .checkpoint-pin {
+    width: 24px;
+    height: 24px;
+  }
+
+  .pin-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .checkpoint-label {
+    bottom: 140%;
+    padding: 6px 10px;
+    font-size: 11px;
+    max-width: 150px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .label-id {
+    font-size: 10px;
+  }
+
+  .label-name {
+    font-size: 10px;
+  }
+
+  /* Adjust checkpoint positions for mobile */
+  .connector-lines line {
+    stroke-width: 0.3;
+  }
+}
+
+@media (max-width: 480px) {
+  .map-header {
+    padding: 12px 15px;
+    gap: 12px;
+  }
+
+  .map-title {
+    font-size: 16px;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-button {
+    padding: 8px 12px;
+    font-size: 10px;
+  }
+
+  .status-indicator {
+    font-size: 9px;
+  }
+
+  .coordinates,
+  .timestamp {
+    font-size: 8px;
+    padding: 4px 6px;
+  }
+
+  .checkpoint-pin {
+    width: 20px;
+    height: 20px;
+  }
+
+  .pin-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .checkpoint-label {
+    padding: 5px 8px;
+    font-size: 10px;
+    max-width: 120px;
+  }
+
+  .label-id {
+    font-size: 9px;
+  }
+
+  .label-name {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 360px) {
+  .map-header {
+    padding: 10px 12px;
+  }
+
+  .map-title {
+    font-size: 14px;
+  }
+
+  .nav-button {
+    padding: 6px 10px;
+    font-size: 9px;
+  }
+
+  .checkpoint-pin {
+    width: 18px;
+    height: 18px;
+  }
+
+  .pin-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .checkpoint-label {
+    font-size: 9px;
+    max-width: 100px;
+  }
+}

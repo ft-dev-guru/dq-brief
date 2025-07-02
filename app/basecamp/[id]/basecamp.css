@@ -328,18 +328,243 @@
 @media (max-width: 900px) {
   .basecamp-container-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
+    margin: 20px auto;
+    padding: 0 15px;
   }
-  
+
+  .navigation-panel {
+    order: 2;
+    padding: 20px;
+  }
+
+  .briefing-display-panel {
+    order: 1;
+  }
+
   .section-header {
-    padding: 14px 16px;
+    padding: 15px 20px;
   }
-  
+
   .section-content {
-    padding: 16px;
+    padding: 15px 20px;
   }
-  
+
   .section-title {
     font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .basecamp-page-body {
+    overflow-x: hidden;
+  }
+
+  .basecamp-header {
+    padding: 15px 20px;
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .basecamp-title {
+    font-size: 20px;
+  }
+
+  .basecamp-id {
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .timestamp {
+    font-size: 10px;
+  }
+
+  .basecamp-container-grid {
+    margin: 15px auto;
+    padding: 0 10px;
+    gap: 15px;
+  }
+
+  .navigation-panel {
+    padding: 15px;
+  }
+
+  .panel-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+  }
+
+  .overall-brief-button {
+    padding: 10px 12px;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .cluster-trigger {
+    font-size: 14px;
+    padding: 10px 6px;
+  }
+
+  .subcluster-list {
+    padding-left: 15px;
+    gap: 6px;
+  }
+
+  .subcluster-item {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+  .briefing-header {
+    padding: 20px;
+    gap: 10px;
+  }
+
+  .briefing-content {
+    padding: 20px;
+  }
+
+  .briefing-selection-text {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .section-header {
+    padding: 12px 15px;
+  }
+
+  .section-title {
+    font-size: 13px;
+  }
+
+  .section-indicator {
+    width: 8px;
+    height: 8px;
+  }
+
+  .section-content {
+    padding: 12px 15px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .score-badge {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .score-label {
+    font-size: 8px;
+  }
+
+  .score-value {
+    font-size: 12px;
+  }
+
+  .typewriter-text {
+    font-size: 14px;
+  }
+
+  .terminal-prompt {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .basecamp-header {
+    padding: 12px 15px;
+    gap: 12px;
+  }
+
+  .basecamp-title {
+    font-size: 18px;
+  }
+
+  .basecamp-id {
+    font-size: 11px;
+  }
+
+  .basecamp-container-grid {
+    padding: 0 8px;
+  }
+
+  .navigation-panel {
+    padding: 12px;
+  }
+
+  .panel-title {
+    font-size: 13px;
+  }
+
+  .overall-brief-button {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .cluster-trigger {
+    font-size: 13px;
+    padding: 8px 5px;
+  }
+
+  .subcluster-item {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .briefing-header {
+    padding: 15px;
+  }
+
+  .briefing-content {
+    padding: 15px;
+  }
+
+  .briefing-selection-text {
+    font-size: 13px;
+  }
+
+  .section-content {
+    font-size: 12px;
+  }
+
+  .typewriter-text {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  .basecamp-header {
+    padding: 10px 12px;
+  }
+
+  .basecamp-title {
+    font-size: 16px;
+  }
+
+  .navigation-panel {
+    padding: 10px;
+  }
+
+  .overall-brief-button {
+    font-size: 12px;
+  }
+
+  .cluster-trigger {
+    font-size: 12px;
+  }
+
+  .subcluster-item {
+    font-size: 10px;
+  }
+
+  .briefing-content {
+    padding: 12px;
+  }
+
+  .section-content {
+    font-size: 11px;
   }
 }
 

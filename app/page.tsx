@@ -12,8 +12,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-black flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      <div className="relative w-full max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-black flex items-center justify-center p-4 sm:p-8">
+      <div className="relative w-full max-w-2xl">
         {/* Ambient glow effect */}
         <div className="absolute inset-0 bg-amber-400/20 blur-3xl rounded-full scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -65,7 +65,7 @@ export default function HomePage() {
 
           {/* Main folder image */}
           <motion.div
-            className="relative z-10 flex justify-center"
+            className="relative z-10 w-full h-auto"
             whileHover={{
               filter: "brightness(1.1) contrast(1.05)",
             }}
@@ -76,8 +76,9 @@ export default function HomePage() {
               alt="Operation DQ Classified Folder"
               width={600}
               height={600}
-              className="rounded-lg shadow-2xl w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl h-auto"
+              className="rounded-lg shadow-2xl w-full h-auto"
               priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 600px"
             />
 
             {/* Hover overlay */}
@@ -123,7 +124,7 @@ export default function HomePage() {
         >
           <motion.button
             onClick={() => router.push("/mission-rules")}
-            className="relative group bg-gradient-to-r from-red-900 via-red-800 to-red-900 hover:from-red-800 hover:via-red-700 hover:to-red-800 text-amber-100 px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-lg font-mono font-bold tracking-wider text-sm sm:text-base lg:text-lg border-2 border-red-700/50 hover:border-red-600 transition-all duration-300 shadow-2xl w-full max-w-xs sm:max-w-sm"
+            className="relative group bg-gradient-to-r from-red-900 via-red-800 to-red-900 hover:from-red-800 hover:via-red-700 hover:to-red-800 text-amber-100 px-6 py-3 sm:px-8 sm:py-4 rounded-lg font-mono font-bold tracking-wider text-sm sm:text-lg border-2 border-red-700/50 hover:border-red-600 transition-all duration-300 shadow-2xl w-full max-w-sm"
             whileHover={{ 
               scale: 1.05,
               boxShadow: "0 0 30px rgba(220, 38, 38, 0.6), inset 0 0 20px rgba(220, 38, 38, 0.2)"
@@ -147,7 +148,7 @@ export default function HomePage() {
             {/* Button content */}
             <span className="relative z-10 flex items-center justify-center gap-2 sm:gap-3">
               <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-400 rounded-full animate-pulse" />
-              <span className="whitespace-nowrap">MISSION RULES</span>
+              MISSION RULES
               <div className="w-2 h-2 sm:w-3 sm:h-3 bg-red-400 rounded-full animate-pulse" />
             </span>
 
@@ -181,7 +182,7 @@ export default function HomePage() {
 
         {/* Mission Rules description */}
         <motion.p
-          className="text-center mt-4 sm:mt-6 text-red-300/70 font-mono text-xs sm:text-xs tracking-wide max-w-md mx-auto px-4"
+          className="text-center mt-4 sm:mt-6 text-red-300/70 font-mono text-xs tracking-wide max-w-md mx-auto px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 2, duration: 0.5 }}
