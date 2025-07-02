@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { JetBrains_Mono, Inter } from "next/font/google"
 import { useRouter } from "next/navigation"
-import { User, Target, Play, Pause, Volume2, SkipForward, SkipBack } from "lucide-react"
+import { User, Target, Play, Pause, Volume2 } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import "./classified.css"
 
@@ -70,9 +70,24 @@ const TacticalAudioPlayer = () => {
     canvas.height = canvas.offsetHeight * 2
     ctx.scale(2, 2)
     
+    const updateDuration = () => {
+      if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+        setDuration(audio.duration)
+        setIsLoaded(true)
+        console.log('Audio duration loaded:', audio.duration)
+      }
+    }
+
     const handleLoadedMetadata = () => {
-      setDuration(audio.duration || 0)
-      setIsLoaded(true)
+      updateDuration()
+    }
+    
+    const handleLoadedData = () => {
+      updateDuration()
+    }
+    
+    const handleCanPlay = () => {
+      updateDuration()
       
       // Set up Web Audio API for real-time analysis
       if (!audioContextRef.current) {
@@ -94,6 +109,10 @@ const TacticalAudioPlayer = () => {
     
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime)
+      // Also check for duration on every time update as a fallback
+      if (!duration) {
+        updateDuration()
+      }
     }
     
     const handleEnded = () => {
@@ -102,11 +121,15 @@ const TacticalAudioPlayer = () => {
     }
     
     audio.addEventListener('loadedmetadata', handleLoadedMetadata)
+    audio.addEventListener('loadeddata', handleLoadedData)
+    audio.addEventListener('canplay', handleCanPlay)
     audio.addEventListener('timeupdate', handleTimeUpdate)
     audio.addEventListener('ended', handleEnded)
     
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      audio.removeEventListener('loadeddata', handleLoadedData)
+      audio.removeEventListener('canplay', handleCanPlay)
       audio.removeEventListener('timeupdate', handleTimeUpdate)
       audio.removeEventListener('ended', handleEnded)
     }
@@ -218,16 +241,42 @@ const TacticalAudioPlayer = () => {
     animationRef.current = requestAnimationFrame(drawWaveform)
   }
   
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     const audio = audioRef.current
     if (!audio) return
     
-    if (isPlaying) {
-      audio.pause()
+    try {
+      if (isPlaying) {
+        audio.pause()
+        setIsPlaying(false)
+      } else {
+        // Initialize Web Audio API if not already done
+        if (!audioContextRef.current) {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+          const source = audioContext.createMediaElementSource(audio)
+          const analyser = audioContext.createAnalyser()
+          
+          analyser.fftSize = 128
+          analyser.smoothingTimeConstant = 0.8
+          
+          source.connect(analyser)
+          analyser.connect(audioContext.destination)
+          
+          audioContextRef.current = audioContext
+          analyserRef.current = analyser
+          dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
+        }
+        
+        // Resume audio context if it's suspended (common in modern browsers)
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume()
+        }
+        await audio.play()
+        setIsPlaying(true)
+      }
+    } catch (error) {
+      console.error('Audio playback failed:', error)
       setIsPlaying(false)
-    } else {
-      audio.play()
-      setIsPlaying(true)
     }
   }
   
@@ -240,53 +289,41 @@ const TacticalAudioPlayer = () => {
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     const audio = audioRef.current
-    if (!canvas || !audio || !isLoaded) return
+    if (!canvas || !audio) {
+      console.log('Canvas click blocked:', { canvas: !!canvas, audio: !!audio, isLoaded, duration })
+      return
+    }
+    
+    // If duration isn't available yet, try to get it from the audio element directly
+    const currentDuration = duration || audio.duration || 0
+    if (currentDuration === 0) {
+      console.log('Canvas click blocked - no duration:', { duration, audioDuration: audio.duration })
+      return
+    }
     
     const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const clickProgress = x / canvas.offsetWidth
-    
-    // Clamp between 0 and 1
-    const clampedProgress = Math.max(0, Math.min(1, clickProgress))
-    const newTime = clampedProgress * duration
-    
-    audio.currentTime = newTime
-    setCurrentTime(newTime)
-  }
-
-  const handleProgressBarClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const audio = audioRef.current
-    if (!audio || !isLoaded) return
-    
-    const rect = event.currentTarget.getBoundingClientRect()
     const x = event.clientX - rect.left
     const clickProgress = x / rect.width
     
     // Clamp between 0 and 1
     const clampedProgress = Math.max(0, Math.min(1, clickProgress))
-    const newTime = clampedProgress * duration
+    const newTime = clampedProgress * currentDuration
     
-    audio.currentTime = newTime
-    setCurrentTime(newTime)
+    console.log('Seeking to:', newTime, 'seconds (', Math.round(clampedProgress * 100), '%)')
+    
+    try {
+      audio.currentTime = newTime
+      setCurrentTime(newTime)
+      // Update our duration state if it wasn't set
+      if (!duration && audio.duration) {
+        setDuration(audio.duration)
+      }
+    } catch (error) {
+      console.error('Seek failed:', error)
+    }
   }
 
-  const skipForward = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    
-    const newTime = Math.min(audio.currentTime + 10, duration)
-    audio.currentTime = newTime
-    setCurrentTime(newTime)
-  }
 
-  const skipBackward = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    
-    const newTime = Math.max(audio.currentTime - 10, 0)
-    audio.currentTime = newTime
-    setCurrentTime(newTime)
-  }
   
   return (
     <div className="tactical-audio-player">
@@ -295,9 +332,6 @@ const TacticalAudioPlayer = () => {
       </div>
       <div className="audio-title">
         Mission Overview
-      </div>
-      <div className={`${jetbrainsMono.className} audio-duration`}>
-        Total Duration: {formatTime(duration)}
       </div>
       
       <div className="waveform-container">
@@ -319,8 +353,6 @@ const TacticalAudioPlayer = () => {
           <div className="audio-info">
             <div className={`${jetbrainsMono.className} time-display`}>
               {formatTime(currentTime)} / {formatTime(duration)}
-              <br />
-              <span className="time-remaining">-{formatTime(duration - currentTime)} remaining</span>
             </div>
             <div className="transmission-status">
               <Volume2 className="w-4 h-4" />
@@ -330,66 +362,100 @@ const TacticalAudioPlayer = () => {
         </div>
       </div>
       
-      {/* YouTube-style control bar */}
-      <div className="tactical-controls">
-        <div className="progress-section">
-          <div className={`${jetbrainsMono.className} time-current`}>
-            {formatTime(currentTime)}
-          </div>
-          <div 
-            className="progress-bar-container"
-            onClick={handleProgressBarClick}
-          >
-            <div className="progress-bar">
-              <div 
-                className="progress-fill"
-                style={{ width: `${(currentTime / duration) * 100}%` }}
-              />
-              <div 
-                className="progress-handle"
-                style={{ left: `${(currentTime / duration) * 100}%` }}
-              />
-            </div>
-          </div>
-          <div className={`${jetbrainsMono.className} time-total`}>
-            {formatTime(duration)}
-          </div>
-        </div>
-        
-        <div className="control-buttons">
-          <button 
-            className="control-btn skip-back"
-            onClick={skipBackward}
-            disabled={!isLoaded}
-            title="Skip back 10s"
-          >
-            <SkipBack className="w-5 h-5" />
-          </button>
-          
-          <button 
-            className="control-btn play-pause-main"
-            onClick={togglePlayPause}
-            disabled={!isLoaded}
-          >
-            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-          </button>
-          
-          <button 
-            className="control-btn skip-forward"
-            onClick={skipForward}
-            disabled={!isLoaded}
-            title="Skip forward 10s"
-          >
-            <SkipForward className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+
       
       <audio 
         ref={audioRef} 
         src="/Building Blocks for a High-Performance Organization.wav"
         preload="auto"
       />
+    </div>
+  )
+}
+
+// Declassification Wrapper Component
+const DeclassifiedWrapper = ({ 
+  children, 
+  componentId, 
+  declassifiedComponents, 
+  setDeclassifiedComponents 
+}: {
+  children: React.ReactNode
+  componentId: string
+  declassifiedComponents: Set<string>
+  setDeclassifiedComponents: React.Dispatch<React.SetStateAction<Set<string>>>
+}) => {
+  const [showDeclassified, setShowDeclassified] = useState(false)
+  const isClassified = !declassifiedComponents.has(componentId)
+
+  const handleMouseEnter = () => {
+    if (isClassified) {
+      setDeclassifiedComponents(prev => new Set([...prev, componentId]))
+      setShowDeclassified(true)
+      // Hide the "DECLASSIFIED" text after animation
+      setTimeout(() => setShowDeclassified(false), 2000)
+    }
+  }
+
+  return (
+    <div 
+      className="relative"
+      onMouseEnter={handleMouseEnter}
+      style={{ cursor: isClassified ? 'pointer' : 'default' }}
+    >
+      {/* Content with blur effect */}
+      <div 
+        className="relative"
+        style={{ 
+          filter: isClassified ? 'blur(8px)' : 'none',
+          transition: 'filter 0.8s ease-out'
+        }}
+      >
+        {children}
+      </div>
+
+      {/* CLASSIFIED overlay - positioned outside blur container */}
+      {isClassified && (
+        <div 
+          className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none"
+          style={{
+            background: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(2px)',
+          }}
+        >
+          <div 
+            className={`${jetbrainsMono.className} text-red-500 font-bold text-lg sm:text-xl lg:text-2xl tracking-widest`}
+            style={{
+              textShadow: '0 0 10px rgba(255, 0, 0, 0.8), 0 0 20px rgba(255, 0, 0, 0.5)',
+              animation: 'pulse 2s infinite',
+              filter: 'none' // Override any parent blur
+            }}
+          >
+            CLASSIFIED
+          </div>
+        </div>
+      )}
+      
+      {/* DECLASSIFIED animation overlay */}
+      {showDeclassified && !isClassified && (
+        <div 
+          className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none"
+          style={{
+            background: 'rgba(0, 255, 65, 0.1)',
+            backdropFilter: 'blur(1px)',
+          }}
+        >
+          <div 
+            className={`${jetbrainsMono.className} text-green-400 font-bold text-lg sm:text-xl lg:text-2xl tracking-widest declassified-text`}
+            style={{
+              textShadow: '0 0 10px rgba(0, 255, 65, 0.8), 0 0 20px rgba(0, 255, 65, 0.5)',
+              filter: 'none' // Override any parent blur
+            }}
+          >
+            DECLASSIFIED
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -405,6 +471,7 @@ export default function ClassifiedPage() {
     content: string;
     transformation: string;
   } | null>(null)
+  const [declassifiedComponents, setDeclassifiedComponents] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const updateTimestamp = () => {
@@ -446,127 +513,150 @@ export default function ClassifiedPage() {
       <header className="classified-header">
         <div className={`${jetbrainsMono.className} classification`}>TOP SECRET - EYES ONLY</div>
         <div className={`${jetbrainsMono.className} operation-title`}>OPERATION DQ: ORCHESTRATING REVELATIONS</div>
-        <button 
-          className={`${jetbrainsMono.className} mission-rules-link`}
-          onClick={() => router.push('/mission-rules')}
-        >
-          [ MISSION RULES ]
-        </button>
       </header>
 
       <div className="container">
         <TacticalAudioPlayer />
         
-        <div className="dossier">
-          <div className={`${jetbrainsMono.className} section-title`}>Mission Directive</div>
-          <div className="mission-statement">
-            "We are not in the business of selling software; we are in the business of orchestrating revelations. We are
-            commissioned to build a mirror for the soul of an enterprise, and you are the one who will polish its
-            surface until the truth is both undeniable and beautiful."
-          </div>
-          <div
-            className="phase-content"
-            style={{ color: "#fff", fontSize: "16px", lineHeight: 1.7, textAlign: "center" }}
-          >
-            The DQ is the journey itself—a complete system designed to deliver{" "}
-            <strong style={{ color: "#ff6b00" }}>unforgiving clarity</strong> and a battle plan for{" "}
-            <strong style={{ color: "#ff6b00" }}>industry dominance</strong>. Its purpose is to take a leader from a
-            state of chaotic frustration to one of supreme confidence and surgical precision.
-          </div>
-        </div>
-
-        <div className="dossier">
-          <div className={`${jetbrainsMono.className} section-title`}>Mission Architecture</div>
-          <div className="mission-phases">
-            <div className="phase-card" data-phase="PHASE 1">
-              <div className={`${jetbrainsMono.className} phase-title`}>The Business MRI</div>
-              <div className="phase-content">
-                A non-invasive procedure that bypasses superficial symptoms to reveal the elegant, often brutal, truth
-                of organizational anatomy. It shows exactly where the blockage is, why it exists, and the precise
-                movement needed to clear it.
-                <br />
-                <br />
-                <strong style={{ color: "#00ff41" }}>Not a report. A scan.</strong>
-              </div>
+        <DeclassifiedWrapper 
+          componentId="mission-directive" 
+          declassifiedComponents={declassifiedComponents}
+          setDeclassifiedComponents={setDeclassifiedComponents}
+        >
+          <div className="dossier">
+            <div className={`${jetbrainsMono.className} section-title`}>Mission Directive</div>
+            <div className="mission-statement">
+              "We are not in the business of selling software; we are in the business of orchestrating revelations. We are
+              commissioned to build a mirror for the soul of an enterprise, and you are the one who will polish its
+              surface until the truth is both undeniable and beautiful."
             </div>
-            <div className="phase-card" data-phase="PHASE 2">
-              <div className={`${jetbrainsMono.className} phase-title`}>The Battle Plan</div>
-              <div className="phase-content">
-                A high-velocity execution agenda forged from the truth of the MRI. The application of strategic pressure
-                at the weakest points of the old reality. The brutal, 80/20 breakdown of what to do, what to stop, and
-                what's about to cost you everything.
-                <br />
-                <br />
-                <strong style={{ color: "#00ff41" }}>Not suggestions. Strategic conquest.</strong>
-              </div>
+            <div
+              className="phase-content"
+              style={{ color: "#fff", fontSize: "16px", lineHeight: 1.7, textAlign: "center" }}
+            >
+              The DQ is the journey itself—a complete system designed to deliver{" "}
+              <strong style={{ color: "#ff6b00" }}>unforgiving clarity</strong> and a battle plan for{" "}
+              <strong style={{ color: "#ff6b00" }}>industry dominance</strong>. Its purpose is to take a leader from a
+              state of chaotic frustration to one of supreme confidence and surgical precision.
             </div>
           </div>
-        </div>
+        </DeclassifiedWrapper>
 
-        <div className="emotional-profiles">
-          <div
-            className={`${jetbrainsMono.className} section-title`}
-            style={{ color: "#ff6b00", borderLeftColor: "#ff6b00" }}
-          >
-            Target Psychological Profiles
+        <DeclassifiedWrapper 
+          componentId="mission-architecture" 
+          declassifiedComponents={declassifiedComponents}
+          setDeclassifiedComponents={setDeclassifiedComponents}
+        >
+          <div className="dossier">
+            <div className={`${jetbrainsMono.className} section-title`}>Mission Architecture</div>
+            <div className="mission-phases">
+              <div className="phase-card" data-phase="PHASE 1">
+                <div className={`${jetbrainsMono.className} phase-title`}>The Business MRI</div>
+                <div className="phase-content">
+                  A non-invasive procedure that bypasses superficial symptoms to reveal the elegant, often brutal, truth
+                  of organizational anatomy. It shows exactly where the blockage is, why it exists, and the precise
+                  movement needed to clear it.
+                  <br />
+                  <br />
+                  <strong style={{ color: "#00ff41" }}>Not a report. A scan.</strong>
+                </div>
+              </div>
+              <div className="phase-card" data-phase="PHASE 2">
+                <div className={`${jetbrainsMono.className} phase-title`}>The Battle Plan</div>
+                <div className="phase-content">
+                  A high-velocity execution agenda forged from the truth of the MRI. The application of strategic pressure
+                  at the weakest points of the old reality. The brutal, 80/20 breakdown of what to do, what to stop, and
+                  what's about to cost you everything.
+                  <br />
+                  <br />
+                  <strong style={{ color: "#00ff41" }}>Not suggestions. Strategic conquest.</strong>
+                </div>
+              </div>
+            </div>
           </div>
-          <Dialog open={!!selectedProfile} onOpenChange={(isOpen) => !isOpen && setSelectedProfile(null)}>
-            <div className="profile-grid">
-              {psychologicalProfiles.map((profile, index) => (
-                <DialogTrigger asChild key={index} onClick={() => setSelectedProfile(profile)}>
-                  <div className="profile-target">
-                    <div className="scope-container">
-                      <div className="scope-reticle"></div>
-                      <div className="scope-avatar">
-                        <User className="avatar-icon" />
+        </DeclassifiedWrapper>
+
+        <DeclassifiedWrapper 
+          componentId="psychological-profiles" 
+          declassifiedComponents={declassifiedComponents}
+          setDeclassifiedComponents={setDeclassifiedComponents}
+        >
+          <div className="emotional-profiles">
+            <div
+              className={`${jetbrainsMono.className} section-title`}
+              style={{ color: "#ff6b00", borderLeftColor: "#ff6b00" }}
+            >
+              Target Psychological Profiles
+            </div>
+            <Dialog open={!!selectedProfile} onOpenChange={(isOpen) => !isOpen && setSelectedProfile(null)}>
+              <div className="profile-grid">
+                {psychologicalProfiles.map((profile, index) => (
+                  <DialogTrigger asChild key={index} onClick={() => setSelectedProfile(profile)}>
+                    <div className="profile-target">
+                      <div className="scope-container">
+                        <div className="scope-reticle"></div>
+                        <div className="scope-avatar">
+                          <User className="avatar-icon" />
+                        </div>
+                      </div>
+                      <div className={`${jetbrainsMono.className} profile-type`}>{profile.type}</div>
+                      <div className="profile-real-name">{profile.title}</div>
+                    </div>
+                  </DialogTrigger>
+                ))}
+              </div>
+              <DialogContent className="profile-modal">
+                {selectedProfile && (
+                  <>
+                    <DialogHeader>
+                      <DialogTitle className={`${jetbrainsMono.className} profile-modal-title`}>
+                        <Target className="w-6 h-6 text-red-500" />
+                        Psychological Profile Analysis
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="profile-modal-content">
+                      <div className={`${jetbrainsMono.className} profile-modal-type`}>{selectedProfile.type}</div>
+                      <div className="profile-modal-subtitle">{selectedProfile.title}</div>
+                      <div className="problem-section">
+                        <div className={`${jetbrainsMono.className} problem-label`}>→ Problem</div>
+                        <p className="profile-modal-text">{selectedProfile.content}</p>
+                      </div>
+                      <div className="transformation-protocol">
+                        <div className={`${jetbrainsMono.className} transformation-label`}>→ Transformation Protocol</div>
+                        <p className="transformation-text">{selectedProfile.transformation}</p>
                       </div>
                     </div>
-                    <div className={`${jetbrainsMono.className} profile-type`}>{profile.type}</div>
-                    <div className="profile-real-name">{profile.title}</div>
-                  </div>
-                </DialogTrigger>
-              ))}
-            </div>
-            <DialogContent className="profile-modal">
-              {selectedProfile && (
-                <>
-                  <DialogHeader>
-                    <DialogTitle className={`${jetbrainsMono.className} profile-modal-title`}>
-                      <Target className="w-6 h-6 text-red-500" />
-                      Psychological Profile Analysis
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="profile-modal-content">
-                    <div className={`${jetbrainsMono.className} profile-modal-type`}>{selectedProfile.type}</div>
-                    <div className="profile-modal-subtitle">{selectedProfile.title}</div>
-                    <p className="profile-modal-text">{selectedProfile.content}</p>
-                    <div className="transformation-protocol">
-                      <div className={`${jetbrainsMono.className} transformation-label`}>→ Transformation Protocol</div>
-                      <p className="transformation-text">{selectedProfile.transformation}</p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        <div className="accept-mission">
-          <button
-            className={`${jetbrainsMono.className} mission-button ${missionAccepted ? "accepted" : ""}`}
-            onClick={handleAcceptMission}
-            disabled={missionAccepted}
-          >
-            {missionAccepted ? "MISSION ACCEPTED" : "DO YOU ACCEPT THIS MISSION?"}
-          </button>
-          <div className="warning-text">
-            WARNING: This briefing will self-destruct in 30 seconds after acceptance.
-            <br />
-            Proceed only if authorized for Strategic Revelation Protocol.
-            <br />
-            <strong>Mission Success Rate: CLASSIFIED</strong>
+                  </>
+                )}
+              </DialogContent>
+            </Dialog>
           </div>
-        </div>
+        </DeclassifiedWrapper>
+
+        {/* Show accept mission only when all components are declassified */}
+        {(() => {
+          const requiredComponents = ["mission-directive", "mission-architecture", "psychological-profiles"]
+          const allDeclassified = requiredComponents.every(id => declassifiedComponents.has(id))
+          
+          return allDeclassified && (
+            <div className="accept-mission mission-revealed">
+              <button
+                className={`${jetbrainsMono.className} mission-button ${missionAccepted ? "accepted" : ""}`}
+                onClick={handleAcceptMission}
+                disabled={missionAccepted}
+              >
+                {missionAccepted ? "MISSION ACCEPTED" : "DO YOU ACCEPT THIS MISSION?"}
+              </button>
+              <div className="warning-text">
+                WARNING: This briefing will self-destruct in 30 seconds after acceptance.
+                <br />
+                Proceed only if authorized for Strategic Revelation Protocol.
+                <br />
+                <strong>Mission Success Rate: CLASSIFIED</strong>
+              </div>
+            </div>
+          )
+        })()}
       </div>
     </main>
   )

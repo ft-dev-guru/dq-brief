@@ -30,7 +30,7 @@ const checkpoints = [
 
 export default function BattlefieldMapPage() {
   const [timestamp, setTimestamp] = useState("")
-  const [activeCheckpoint, setActiveCheckpoint] = useState(null)
+  const [activeCheckpoint, setActiveCheckpoint] = useState<number | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -50,9 +50,9 @@ export default function BattlefieldMapPage() {
       <div className={`${jetbrainsMono.className} timestamp`}>{timestamp}</div>
 
       <header className="map-header">
-        <button onClick={() => router.push("/mission-accepted")} className={`${jetbrainsMono.className} nav-button`}>
+        <button onClick={() => router.push("/mission-rules")} className={`${jetbrainsMono.className} nav-button`}>
           <ArrowLeft className="w-4 h-4" />
-          Return to Dependencies
+          Return to Mission Rules
         </button>
         <div className="header-title-container">
           <Target className="w-8 h-8 text-red-500" />

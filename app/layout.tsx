@@ -37,9 +37,11 @@ export default function RootLayout({
               text-size-adjust: 100%;
             }
             body {
-              overflow-x: hidden;
-              width: 100%;
-              max-width: 100%;
+              overflow: auto;
+              width: 100vw;
+              height: 100vh;
+              max-width: 100vw;
+              max-height: 100vh;
               margin: 0;
               padding: 0;
               font-size: 16px;

@@ -437,14 +437,6 @@ export default function MissionRulesPage() {
       </header>
 
       <div className="container">
-        <button 
-          className={`${jetbrainsMono.className} back-button`}
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Return to Previous Mission
-        </button>
-
         <div className="rules-directive">
           <div className="directive-quote">
             {parsedSections.length > 0 ? 
@@ -714,49 +706,6 @@ export default function MissionRulesPage() {
                     </div>
                   </div>
                 </div>
-                
-                <div className="final-quality-checklist">
-                  <div className={`${jetbrainsMono.className} checklist-header`}>
-                    <div className="checklist-title">FINAL QUALITY CHECKLIST</div>
-                    <div className="checklist-subtitle">Before any page is approved, ask:</div>
-                  </div>
-                  <div className="checklist-content">
-                    <div className="checklist-items">
-                      <div className="checklist-item">
-                        <div className="checklist-number">1.</div>
-                        <div className="checklist-text"><strong>Does it trigger WOW, FEAR, or EXCITEMENT?</strong></div>
-                      </div>
-                      <div className="checklist-item">
-                        <div className="checklist-number">2.</div>
-                        <div className="checklist-text"><strong>Can a CEO understand it in 3 seconds?</strong></div>
-                      </div>
-                      <div className="checklist-item">
-                        <div className="checklist-number">3.</div>
-                        <div className="checklist-text"><strong>Does it reveal something they didn't know?</strong></div>
-                      </div>
-                      <div className="checklist-item">
-                        <div className="checklist-number">4.</div>
-                        <div className="checklist-text"><strong>Will they remember this visual tomorrow?</strong></div>
-                      </div>
-                      <div className="checklist-item">
-                        <div className="checklist-number">5.</div>
-                        <div className="checklist-text"><strong>Does it drive immediate action?</strong></div>
-                      </div>
-                      <div className="checklist-item">
-                        <div className="checklist-number">6.</div>
-                        <div className="checklist-text"><strong>Is every pixel fighting for its place?</strong></div>
-                      </div>
-                      <div className="checklist-item">
-                        <div className="checklist-number">7.</div>
-                        <div className="checklist-text"><strong>Does the intensity match the message?</strong></div>
-                      </div>
-                      <div className="checklist-item">
-                        <div className="checklist-number">8.</div>
-                        <div className="checklist-text"><strong>Would they frame this and hang it up?</strong></div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
               
               {/* Emotional and Remember Sections */}
@@ -861,12 +810,16 @@ export default function MissionRulesPage() {
                       </div>
                       
                       <div className="remember-content">
+                        <div className="remember-scanning">
+                          These people dont read they scan
+                        </div>
+                        
                         <div className="remember-goal">
-                          Make them say: <span className="goal-quote">"Holy shit, these people see everything."</span>
+                          Make them say: <span className="goal-quote">Holy shit these people see everything</span>
                         </div>
                         
                         <div className="remember-action">
-                          Then make them act.
+                          Then make them act
                         </div>
                       </div>
                     </div>
@@ -947,6 +900,66 @@ export default function MissionRulesPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Final Quality Checklist - Moved to bottom */}
+              <div className="final-quality-checklist">
+                <div className={`${jetbrainsMono.className} checklist-header`}>
+                  <div className="checklist-title">FINAL QUALITY CHECKLIST</div>
+                  <div className="checklist-subtitle">Before any page is approved, ask:</div>
+                </div>
+                <div className="checklist-content">
+                  <div className="checklist-items">
+                    <div className="checklist-item">
+                      <div className="checklist-number">1.</div>
+                      <div className="checklist-text"><strong>Does it trigger WOW, FEAR, or EXCITEMENT?</strong></div>
+                    </div>
+                    <div className="checklist-item">
+                      <div className="checklist-number">2.</div>
+                      <div className="checklist-text"><strong>Can a CEO understand it in 3 seconds?</strong></div>
+                    </div>
+                    <div className="checklist-item">
+                      <div className="checklist-number">3.</div>
+                      <div className="checklist-text"><strong>Does it reveal something they didn't know?</strong></div>
+                    </div>
+                    <div className="checklist-item">
+                      <div className="checklist-number">4.</div>
+                      <div className="checklist-text"><strong>Will they remember this visual tomorrow?</strong></div>
+                    </div>
+                    <div className="checklist-item">
+                      <div className="checklist-number">5.</div>
+                      <div className="checklist-text"><strong>Does it drive immediate action?</strong></div>
+                    </div>
+                    <div className="checklist-item">
+                      <div className="checklist-number">6.</div>
+                      <div className="checklist-text"><strong>Is every pixel fighting for its place?</strong></div>
+                    </div>
+                    <div className="checklist-item">
+                      <div className="checklist-number">7.</div>
+                      <div className="checklist-text"><strong>Does the intensity match the message?</strong></div>
+                    </div>
+                    <div className="checklist-item">
+                      <div className="checklist-number">8.</div>
+                      <div className="checklist-text"><strong>Would they frame this and hang it up?</strong></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Navigation */}
+              <div className="navigation">
+                <button 
+                  className={`${jetbrainsMono.className} nav-button`}
+                  onClick={() => router.push("/mission-accepted")}
+                >
+                  ← Return to Mission Accepted
+                </button>
+                <button 
+                  className={`${jetbrainsMono.className} nav-button primary`}
+                  onClick={() => router.push("/battlefield-map")}
+                >
+                  Proceed to Battlefield Map →
+                </button>
               </div>
             </div>
           )}

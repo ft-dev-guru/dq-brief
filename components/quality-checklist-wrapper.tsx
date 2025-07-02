@@ -6,8 +6,11 @@ import QualityChecklist from "./quality-checklist"
 export default function QualityChecklistWrapper() {
   const pathname = usePathname()
   
-  // Don't show the quality checklist on the mission-rules page
-  if (pathname === "/mission-rules") {
+  // Only show the quality checklist AFTER the mission-accepted screen
+  // Don't show on: home page, classified screen, mission-accepted screen
+  const excludedPaths = ["/", "/classified", "/mission-accepted"]
+  
+  if (excludedPaths.includes(pathname)) {
     return null
   }
 

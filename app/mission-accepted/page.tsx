@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { JetBrains_Mono, Inter } from "next/font/google"
-import { Play, Pause, Volume2, SkipForward, SkipBack } from "lucide-react"
+import { Play, Pause, Volume2 } from "lucide-react"
 import "./mission-accepted.css"
 
 const jetbrainsMono = JetBrains_Mono({
@@ -43,24 +43,34 @@ const TacticalAudioPlayer = () => {
     ctx.scale(2, 2)
     
     const handleLoadedMetadata = () => {
-      setDuration(audio.duration || 0)
-      setIsLoaded(true)
-      
-      // Set up Web Audio API for real-time analysis
-      if (!audioContextRef.current) {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-        const source = audioContext.createMediaElementSource(audio)
-        const analyser = audioContext.createAnalyser()
+      if (audio.duration) {
+        setDuration(audio.duration)
+        setIsLoaded(true)
+        console.log('Audio duration loaded:', audio.duration)
+      }
+    }
+    
+    const handleCanPlay = () => {
+      if (audio.duration) {
+        setDuration(audio.duration)
+        setIsLoaded(true)
         
-        analyser.fftSize = 128
-        analyser.smoothingTimeConstant = 0.8
-        
-        source.connect(analyser)
-        analyser.connect(audioContext.destination)
-        
-        audioContextRef.current = audioContext
-        analyserRef.current = analyser
-        dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
+        // Set up Web Audio API for real-time analysis
+        if (!audioContextRef.current) {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+          const source = audioContext.createMediaElementSource(audio)
+          const analyser = audioContext.createAnalyser()
+          
+          analyser.fftSize = 128
+          analyser.smoothingTimeConstant = 0.8
+          
+          source.connect(analyser)
+          analyser.connect(audioContext.destination)
+          
+          audioContextRef.current = audioContext
+          analyserRef.current = analyser
+          dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
+        }
       }
     }
     
@@ -74,11 +84,13 @@ const TacticalAudioPlayer = () => {
     }
     
     audio.addEventListener('loadedmetadata', handleLoadedMetadata)
+    audio.addEventListener('canplay', handleCanPlay)
     audio.addEventListener('timeupdate', handleTimeUpdate)
     audio.addEventListener('ended', handleEnded)
     
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      audio.removeEventListener('canplay', handleCanPlay)
       audio.removeEventListener('timeupdate', handleTimeUpdate)
       audio.removeEventListener('ended', handleEnded)
     }
@@ -190,16 +202,42 @@ const TacticalAudioPlayer = () => {
     animationRef.current = requestAnimationFrame(drawWaveform)
   }
   
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     const audio = audioRef.current
     if (!audio) return
     
-    if (isPlaying) {
-      audio.pause()
+    try {
+      if (isPlaying) {
+        audio.pause()
+        setIsPlaying(false)
+      } else {
+        // Initialize Web Audio API if not already done
+        if (!audioContextRef.current) {
+          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+          const source = audioContext.createMediaElementSource(audio)
+          const analyser = audioContext.createAnalyser()
+          
+          analyser.fftSize = 128
+          analyser.smoothingTimeConstant = 0.8
+          
+          source.connect(analyser)
+          analyser.connect(audioContext.destination)
+          
+          audioContextRef.current = audioContext
+          analyserRef.current = analyser
+          dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
+        }
+        
+        // Resume audio context if it's suspended (common in modern browsers)
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume()
+        }
+        await audio.play()
+        setIsPlaying(true)
+      }
+    } catch (error) {
+      console.error('Audio playback failed:', error)
       setIsPlaying(false)
-    } else {
-      audio.play()
-      setIsPlaying(true)
     }
   }
   
@@ -212,25 +250,12 @@ const TacticalAudioPlayer = () => {
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
     const audio = audioRef.current
-    if (!canvas || !audio || !isLoaded) return
+    if (!canvas || !audio || !isLoaded || duration === 0) {
+      console.log('Canvas click blocked:', { canvas: !!canvas, audio: !!audio, isLoaded, duration })
+      return
+    }
     
     const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const clickProgress = x / canvas.offsetWidth
-    
-    // Clamp between 0 and 1
-    const clampedProgress = Math.max(0, Math.min(1, clickProgress))
-    const newTime = clampedProgress * duration
-    
-    audio.currentTime = newTime
-    setCurrentTime(newTime)
-  }
-
-  const handleProgressBarClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    const audio = audioRef.current
-    if (!audio || !isLoaded) return
-    
-    const rect = event.currentTarget.getBoundingClientRect()
     const x = event.clientX - rect.left
     const clickProgress = x / rect.width
     
@@ -238,27 +263,17 @@ const TacticalAudioPlayer = () => {
     const clampedProgress = Math.max(0, Math.min(1, clickProgress))
     const newTime = clampedProgress * duration
     
-    audio.currentTime = newTime
-    setCurrentTime(newTime)
+    console.log('Seeking to:', newTime, 'seconds (', Math.round(clampedProgress * 100), '%)')
+    
+    try {
+      audio.currentTime = newTime
+      setCurrentTime(newTime)
+    } catch (error) {
+      console.error('Seek failed:', error)
+    }
   }
 
-  const skipForward = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    
-    const newTime = Math.min(audio.currentTime + 10, duration)
-    audio.currentTime = newTime
-    setCurrentTime(newTime)
-  }
 
-  const skipBackward = () => {
-    const audio = audioRef.current
-    if (!audio) return
-    
-    const newTime = Math.max(audio.currentTime - 10, 0)
-    audio.currentTime = newTime
-    setCurrentTime(newTime)
-  }
   
   return (
     <div className="tactical-audio-player">
@@ -267,9 +282,6 @@ const TacticalAudioPlayer = () => {
       </div>
       <div className="audio-title">
         Dependencies Overview
-      </div>
-      <div className={`${jetbrainsMono.className} audio-duration`}>
-        Total Duration: {formatTime(duration)}
       </div>
       
       <div className="waveform-container">
@@ -291,8 +303,6 @@ const TacticalAudioPlayer = () => {
           <div className="audio-info">
             <div className={`${jetbrainsMono.className} time-display`}>
               {formatTime(currentTime)} / {formatTime(duration)}
-              <br />
-              <span className="time-remaining">-{formatTime(duration - currentTime)} remaining</span>
             </div>
             <div className="transmission-status">
               <Volume2 className="w-4 h-4" />
@@ -302,60 +312,7 @@ const TacticalAudioPlayer = () => {
         </div>
       </div>
       
-      {/* YouTube-style control bar */}
-      <div className="tactical-controls">
-        <div className="progress-section">
-          <div className={`${jetbrainsMono.className} time-current`}>
-            {formatTime(currentTime)}
-          </div>
-          <div 
-            className="progress-bar-container"
-            onClick={handleProgressBarClick}
-          >
-            <div className="progress-bar">
-              <div 
-                className="progress-fill"
-                style={{ width: `${(currentTime / duration) * 100}%` }}
-              />
-              <div 
-                className="progress-handle"
-                style={{ left: `${(currentTime / duration) * 100}%` }}
-              />
-            </div>
-          </div>
-          <div className={`${jetbrainsMono.className} time-total`}>
-            {formatTime(duration)}
-          </div>
-        </div>
-        
-        <div className="control-buttons">
-          <button 
-            className="control-btn skip-back"
-            onClick={skipBackward}
-            disabled={!isLoaded}
-            title="Skip back 10s"
-          >
-            <SkipBack className="w-5 h-5" />
-          </button>
-          
-          <button 
-            className="control-btn play-pause-main"
-            onClick={togglePlayPause}
-            disabled={!isLoaded}
-          >
-            {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-          </button>
-          
-          <button 
-            className="control-btn skip-forward"
-            onClick={skipForward}
-            disabled={!isLoaded}
-            title="Skip forward 10s"
-          >
-            <SkipForward className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+
       
       <audio 
         ref={audioRef} 
@@ -391,10 +348,10 @@ export default function MissionAcceptedPage() {
     router.push("/classified")
   }
 
-  const proceedToBattlefield = () => {
+  const proceedToMissionRules = () => {
     setIsFadingOut(true)
     setTimeout(() => {
-      router.push("/battlefield-map")
+      router.push("/mission-rules")
     }, 1500)
   }
 
@@ -495,8 +452,8 @@ export default function MissionAcceptedPage() {
                   "We investigate its readiness for the future to see if it is positioned to lead or destined to be replaced.",
               },
             ].map((step, index, arr) => (
-              <>
-                <div className="dependency-step" key={step.num}>
+              <React.Fragment key={step.num}>
+                <div className="dependency-step">
                   <div className="step-indicator">{step.num}</div>
                   <div className="step-header">
                     <div className={`${jetbrainsMono.className} step-sequence`}>{step.sequence}</div>
@@ -514,7 +471,7 @@ export default function MissionAcceptedPage() {
                     <div className="arrow-symbol">↓</div>
                   </div>
                 )}
-              </>
+              </React.Fragment>
             ))}
           </div>
         </div>
@@ -532,8 +489,8 @@ export default function MissionAcceptedPage() {
           <button className={`${jetbrainsMono.className} nav-button`} onClick={goToLevel1}>
             ← Return to Mission Brief
           </button>
-          <button className={`${jetbrainsMono.className} nav-button primary`} onClick={proceedToBattlefield}>
-            Proceed to Battlefield Map →
+          <button className={`${jetbrainsMono.className} nav-button primary`} onClick={proceedToMissionRules}>
+            Proceed to Mission Rules →
           </button>
         </div>
       </div>

@@ -390,6 +390,21 @@
   margin-bottom: 24px;
 }
 
+.problem-section {
+  border-top: 1px solid rgba(255, 107, 0, 0.3);
+  padding-top: 16px;
+  margin-bottom: 24px;
+}
+
+.problem-label {
+  color: #ff6b00;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  font-family: "JetBrains Mono", monospace;
+}
+
 .transformation-protocol {
   border-top: 1px solid rgba(0, 255, 65, 0.3);
   padding-top: 16px;
@@ -694,6 +709,7 @@
   padding: 16px 20px;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(1px);
+  pointer-events: none;
 }
 
 .play-button {
@@ -709,6 +725,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+  pointer-events: auto;
 }
 
 .play-button:hover {
@@ -1070,5 +1087,65 @@
   .play-pause-main {
     width: 40px;
     height: 40px;
+  }
+}
+
+/* Declassification Effects */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+/* DECLASSIFIED animation */
+.declassified-text {
+  animation: declassifiedReveal 2s ease-out forwards;
+}
+
+@keyframes declassifiedReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(20px);
+    filter: blur(5px);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.1) translateY(-5px);
+    filter: blur(0px);
+  }
+  40% {
+    transform: scale(1) translateY(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9) translateY(-10px);
+  }
+}
+
+/* Mission revealed animation */
+.mission-revealed {
+  animation: missionRevealEntrance 1s ease-out forwards;
+}
+
+@keyframes missionRevealEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+    filter: blur(5px);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-5px) scale(1.05);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
   }
 }
