@@ -396,15 +396,7 @@ const TacticalAudioPlayer = () => {
 
 export default function ClassifiedPage() {
   const [timestamp, setTimestamp] = useState("")
-  const [missionAccepted, setMissionAccepted] = useState(false)
-  const [isDestructing, setIsDestructing] = useState(false)
   const router = useRouter()
-  const [selectedProfile, setSelectedProfile] = useState<{
-    type: string;
-    title: string;
-    content: string;
-    transformation: string;
-  } | null>(null)
 
   useEffect(() => {
     const updateTimestamp = () => {
@@ -412,159 +404,171 @@ export default function ClassifiedPage() {
       const ts = now.toISOString().replace("T", " ").substring(0, 19) + " UTC"
       setTimestamp(`TIMESTAMP: ${ts}`)
     }
-
     updateTimestamp()
     const intervalId = setInterval(updateTimestamp, 1000)
-
     return () => clearInterval(intervalId)
   }, [])
 
   const handleAcceptMission = () => {
-    setMissionAccepted(true)
-    setTimeout(() => {
-      setIsDestructing(true)
-      setTimeout(() => {
-        router.push("/mission-accepted")
-      }, 2000)
-    }, 1000)
+    router.push("/mission-accepted")
   }
 
-  const bodyClasses = [
-    inter.className,
-    "classified-page-body",
-    missionAccepted ? "mission-accepted-filter" : "",
-    isDestructing ? "fade-out-effect" : "",
-  ].join(" ")
-
   return (
-    <main className={bodyClasses}>
-      <div className={`${jetbrainsMono.className} coordinates`}>LAT: 42.3601° N, LONG: 71.0589° W</div>
-      <div className={`${jetbrainsMono.className} timestamp`} id="timestamp">
-        {timestamp}
+    <main className={`${inter.className} classified-page min-h-screen bg-gradient-to-br from-slate-800 via-slate-900 to-black`}>
+      {/* Header with responsive layout */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-6 lg:p-8 border-b border-green-500/30">
+        <div className={`${jetbrainsMono.className} text-green-400 text-xs sm:text-sm tracking-wider mb-2 sm:mb-0`}>
+          GRID REF: 74B-KILO-29 | AO: SECURE
+        </div>
+        <div className={`${jetbrainsMono.className} text-green-400 text-xs sm:text-sm`}>
+          {timestamp}
+        </div>
       </div>
 
-      <header className="classified-header">
-        <div className={`${jetbrainsMono.className} classification`}>TOP SECRET - EYES ONLY</div>
-        <div className={`${jetbrainsMono.className} operation-title`}>OPERATION DQ: ORCHESTRATING REVELATIONS</div>
-        <button 
-          className={`${jetbrainsMono.className} mission-rules-link`}
-          onClick={() => router.push('/mission-rules')}
-        >
-          [ MISSION RULES ]
-        </button>
-      </header>
-
-      <div className="container">
-        <TacticalAudioPlayer />
-        
-        <div className="dossier">
-          <div className={`${jetbrainsMono.className} section-title`}>Mission Directive</div>
-          <div className="mission-statement">
-            "We are not in the business of selling software; we are in the business of orchestrating revelations. We are
-            commissioned to build a mirror for the soul of an enterprise, and you are the one who will polish its
-            surface until the truth is both undeniable and beautiful."
+      {/* Main content container with responsive padding */}
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 max-w-7xl">
+        {/* Classification header */}
+        <div className="text-center mb-8 sm:mb-12">
+          <div className={`${jetbrainsMono.className} text-red-500 text-sm sm:text-base lg:text-xl font-bold tracking-wider mb-2 sm:mb-4`}>
+            ⚠️ CLASSIFIED - EYES ONLY ⚠️
           </div>
-          <div
-            className="phase-content"
-            style={{ color: "#fff", fontSize: "16px", lineHeight: 1.7, textAlign: "center" }}
-          >
-            The DQ is the journey itself—a complete system designed to deliver{" "}
-            <strong style={{ color: "#ff6b00" }}>unforgiving clarity</strong> and a battle plan for{" "}
-            <strong style={{ color: "#ff6b00" }}>industry dominance</strong>. Its purpose is to take a leader from a
-            state of chaotic frustration to one of supreme confidence and surgical precision.
+          <h1 className={`${jetbrainsMono.className} text-green-400 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-wider mb-4 sm:mb-6`}>
+            PSYCHOLOGICAL WARFARE PROTOCOLS
+          </h1>
+          <p className={`${inter.className} text-gray-300 text-sm sm:text-base lg:text-lg max-w-3xl mx-auto leading-relaxed px-4`}>
+            Intelligence briefing on target psychological profiles. Study these patterns. Learn their triggers. Deploy accordingly.
+          </p>
+        </div>
+
+        {/* Audio briefing section with responsive design */}
+        <div className="mb-8 sm:mb-12">
+          <div className={`${jetbrainsMono.className} text-green-400 text-lg sm:text-xl lg:text-2xl font-bold mb-4 sm:mb-6 flex items-center justify-center gap-2 sm:gap-3`}>
+            <Volume2 className="w-5 h-5 sm:w-6 sm:h-6" />
+            TACTICAL AUDIO BRIEFING
+          </div>
+          
+          <div className="bg-black/60 backdrop-blur-sm border-2 border-green-500/30 rounded-lg p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
+            <TacticalAudioPlayer />
           </div>
         </div>
 
-        <div className="dossier">
-          <div className={`${jetbrainsMono.className} section-title`}>Mission Architecture</div>
-          <div className="mission-phases">
-            <div className="phase-card" data-phase="PHASE 1">
-              <div className={`${jetbrainsMono.className} phase-title`}>The Business MRI</div>
-              <div className="phase-content">
-                A non-invasive procedure that bypasses superficial symptoms to reveal the elegant, often brutal, truth
-                of organizational anatomy. It shows exactly where the blockage is, why it exists, and the precise
-                movement needed to clear it.
-                <br />
-                <br />
-                <strong style={{ color: "#00ff41" }}>Not a report. A scan.</strong>
-              </div>
-            </div>
-            <div className="phase-card" data-phase="PHASE 2">
-              <div className={`${jetbrainsMono.className} phase-title`}>The Battle Plan</div>
-              <div className="phase-content">
-                A high-velocity execution agenda forged from the truth of the MRI. The application of strategic pressure
-                at the weakest points of the old reality. The brutal, 80/20 breakdown of what to do, what to stop, and
-                what's about to cost you everything.
-                <br />
-                <br />
-                <strong style={{ color: "#00ff41" }}>Not suggestions. Strategic conquest.</strong>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Psychological profiles grid with responsive layout */}
+        <div className="mb-8 sm:mb-12">
+          <h2 className={`${jetbrainsMono.className} text-green-400 text-xl sm:text-2xl lg:text-3xl font-bold text-center mb-6 sm:mb-8 lg:mb-10`}>
+            TARGET PSYCHOLOGICAL PROFILES
+          </h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+            {psychologicalProfiles.map((profile, index) => (
+              <div
+                key={index}
+                className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm border-2 border-amber-500/30 rounded-lg p-4 sm:p-6 hover:border-amber-500/60 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/20"
+              >
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className={`${jetbrainsMono.className} text-amber-400 text-xs sm:text-sm font-bold tracking-wider`}>
+                    {profile.type}
+                  </div>
+                  <Target className="w-4 h-4 sm:w-5 sm:h-5 text-red-500" />
+                </div>
+                
+                <h3 className={`${jetbrainsMono.className} text-white text-base sm:text-lg lg:text-xl font-bold mb-3 sm:mb-4`}>
+                  {profile.title}
+                </h3>
+                
+                <div className="space-y-3 sm:space-y-4">
+                  <div>
+                    <h4 className={`${jetbrainsMono.className} text-red-400 text-sm font-bold mb-2`}>
+                      CURRENT STATE:
+                    </h4>
+                    <p className={`${inter.className} text-gray-300 text-xs sm:text-sm leading-relaxed`}>
+                      {profile.content}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h4 className={`${jetbrainsMono.className} text-green-400 text-sm font-bold mb-2`}>
+                      TARGET TRANSFORMATION:
+                    </h4>
+                    <p className={`${inter.className} text-gray-300 text-xs sm:text-sm leading-relaxed`}>
+                      {profile.transformation}
+                    </p>
+                  </div>
+                </div>
 
-        <div className="emotional-profiles">
-          <div
-            className={`${jetbrainsMono.className} section-title`}
-            style={{ color: "#ff6b00", borderLeftColor: "#ff6b00" }}
-          >
-            Target Psychological Profiles
-          </div>
-          <Dialog open={!!selectedProfile} onOpenChange={(isOpen) => !isOpen && setSelectedProfile(null)}>
-            <div className="profile-grid">
-              {psychologicalProfiles.map((profile, index) => (
-                <DialogTrigger asChild key={index} onClick={() => setSelectedProfile(profile)}>
-                  <div className="profile-target">
-                    <div className="scope-container">
-                      <div className="scope-reticle"></div>
-                      <div className="scope-avatar">
-                        <User className="avatar-icon" />
+                {/* More Details Dialog */}
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-black font-bold py-2 sm:py-3 px-4 rounded-lg transition-all duration-300 text-xs sm:text-sm">
+                      DEPLOY TACTICAL ANALYSIS
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-900 border-2 border-amber-500/50 text-white">
+                    <DialogHeader>
+                      <DialogTitle className={`${jetbrainsMono.className} text-amber-400 text-lg sm:text-xl`}>
+                        {profile.type}: {profile.title}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+                      <div>
+                        <h4 className={`${jetbrainsMono.className} text-red-400 text-sm sm:text-base font-bold mb-2 sm:mb-3`}>
+                          DETAILED PSYCHOLOGICAL ANALYSIS:
+                        </h4>
+                        <p className={`${inter.className} text-gray-300 text-sm sm:text-base leading-relaxed`}>
+                          {profile.content}
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h4 className={`${jetbrainsMono.className} text-green-400 text-sm sm:text-base font-bold mb-2 sm:mb-3`}>
+                          TRANSFORMATION STRATEGY:
+                        </h4>
+                        <p className={`${inter.className} text-gray-300 text-sm sm:text-base leading-relaxed`}>
+                          {profile.transformation}
+                        </p>
+                      </div>
+                      
+                      <div className="bg-black/40 border border-amber-500/30 rounded-lg p-3 sm:p-4">
+                        <h4 className={`${jetbrainsMono.className} text-amber-400 text-sm sm:text-base font-bold mb-2`}>
+                          MISSION CRITICAL INTELLIGENCE:
+                        </h4>
+                        <p className={`${inter.className} text-gray-300 text-xs sm:text-sm leading-relaxed`}>
+                          Deploy visual and strategic elements that address the specific psychological state. 
+                          Monitor for behavioral changes indicating successful transformation. 
+                          Adjust tactical approach based on resistance patterns.
+                        </p>
                       </div>
                     </div>
-                    <div className={`${jetbrainsMono.className} profile-type`}>{profile.type}</div>
-                    <div className="profile-real-name">{profile.title}</div>
-                  </div>
-                </DialogTrigger>
-              ))}
-            </div>
-            <DialogContent className="profile-modal">
-              {selectedProfile && (
-                <>
-                  <DialogHeader>
-                    <DialogTitle className={`${jetbrainsMono.className} profile-modal-title`}>
-                      <Target className="w-6 h-6 text-red-500" />
-                      Psychological Profile Analysis
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="profile-modal-content">
-                    <div className={`${jetbrainsMono.className} profile-modal-type`}>{selectedProfile.type}</div>
-                    <div className="profile-modal-subtitle">{selectedProfile.title}</div>
-                    <p className="profile-modal-text">{selectedProfile.content}</p>
-                    <div className="transformation-protocol">
-                      <div className={`${jetbrainsMono.className} transformation-label`}>→ Transformation Protocol</div>
-                      <p className="transformation-text">{selectedProfile.transformation}</p>
-                    </div>
-                  </div>
-                </>
-              )}
-            </DialogContent>
-          </Dialog>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="accept-mission">
+        {/* Mission acceptance section with responsive design */}
+        <div className="text-center bg-gradient-to-br from-red-900/20 to-red-800/20 backdrop-blur-sm border-2 border-red-500/50 rounded-lg p-6 sm:p-8 lg:p-10 max-w-4xl mx-auto">
+          <div className={`${jetbrainsMono.className} text-red-400 text-sm sm:text-base font-bold tracking-wider mb-3 sm:mb-4`}>
+            MISSION AUTHORIZATION REQUIRED
+          </div>
+          
+          <h2 className={`${jetbrainsMono.className} text-white text-xl sm:text-2xl lg:text-3xl font-bold mb-4 sm:mb-6`}>
+            PROCEED TO OPERATIONAL PHASE?
+          </h2>
+          
+          <p className={`${inter.className} text-gray-300 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8 max-w-2xl mx-auto px-4`}>
+            You have reviewed the psychological warfare protocols. Intelligence has been acquired. 
+            Are you prepared to accept this mission and proceed to operational deployment?
+          </p>
+          
           <button
-            className={`${jetbrainsMono.className} mission-button ${missionAccepted ? "accepted" : ""}`}
             onClick={handleAcceptMission}
-            disabled={missionAccepted}
+            className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-black font-bold py-3 sm:py-4 px-6 sm:px-8 lg:px-12 rounded-lg transition-all duration-300 text-sm sm:text-base lg:text-lg tracking-wider hover:shadow-lg hover:shadow-green-500/30 w-full sm:w-auto"
           >
-            {missionAccepted ? "MISSION ACCEPTED" : "DO YOU ACCEPT THIS MISSION?"}
+            ACCEPT MISSION
           </button>
-          <div className="warning-text">
-            WARNING: This briefing will self-destruct in 30 seconds after acceptance.
-            <br />
-            Proceed only if authorized for Strategic Revelation Protocol.
-            <br />
-            <strong>Mission Success Rate: CLASSIFIED</strong>
+          
+          <div className={`${jetbrainsMono.className} text-green-400 text-xs sm:text-sm mt-4 sm:mt-6 animate-pulse`}>
+            &gt; AWAITING CONFIRMATION...
           </div>
         </div>
       </div>

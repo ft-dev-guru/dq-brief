@@ -3076,3 +3076,561 @@
     gap: 10px;
   }
 } 
+
+/* Enhanced responsive styles for all screen sizes */
+@media (max-width: 480px) {
+  .mission-rules-body {
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .rules-header {
+    padding: 15px 10px;
+    text-align: center;
+  }
+
+  .rules-classification {
+    font-size: 14px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+
+  .rules-title {
+    font-size: 20px;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .rules-subtitle {
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  .container {
+    padding: 20px 10px;
+    max-width: 100%;
+  }
+
+  .back-button {
+    font-size: 12px;
+    padding: 8px 12px;
+    margin-bottom: 20px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .overview-stats {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+
+  .stat-card {
+    padding: 15px;
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+
+  .rules-directive {
+    padding: 20px 15px;
+    margin-bottom: 25px;
+  }
+
+  .directive-quote {
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+  }
+
+  .directive-emphasis {
+    font-size: 14px;
+  }
+
+  .rule-card {
+    margin-bottom: 15px;
+    padding: 15px;
+  }
+
+  .rule-title {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .rule-content {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .mission-rules-body {
+    padding: 0;
+  }
+
+  .rules-header {
+    padding: 20px 15px;
+  }
+
+  .rules-classification {
+    font-size: 16px;
+    letter-spacing: 1.5px;
+  }
+
+  .rules-title {
+    font-size: 28px;
+    letter-spacing: 2px;
+  }
+
+  .rules-subtitle {
+    font-size: 16px;
+  }
+
+  .container {
+    padding: 30px 15px;
+    max-width: 100%;
+  }
+
+  .overview-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+  }
+
+  .stat-card {
+    padding: 18px;
+  }
+
+  .stat-number {
+    font-size: 28px;
+  }
+
+  .rules-directive {
+    padding: 25px 20px;
+    margin-bottom: 30px;
+  }
+
+  .directive-quote {
+    font-size: 18px;
+    line-height: 1.5;
+  }
+
+  .directive-emphasis {
+    font-size: 16px;
+  }
+
+  .rule-card {
+    margin-bottom: 20px;
+    padding: 20px;
+  }
+
+  .rule-title {
+    font-size: 18px;
+    line-height: 1.3;
+  }
+
+  .rule-content {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+/* Improved responsive layout for containers */
+@media (max-width: 768px) {
+  .mission-specifics-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 15px;
+  }
+
+  .countdown-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .countdown-phase {
+    padding: 15px 10px;
+  }
+
+  .phase-timer {
+    font-size: 18px;
+  }
+
+  .terminal-title, .budget-title, .stakes-title, .questions-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .terminal-icon, .budget-icon, .stakes-icon, .questions-icon {
+    margin-right: 8px;
+  }
+
+  .directive-title {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
+  .directive-quote {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
+  /* Enhanced emotional journey responsiveness */
+  .emotional-journey-interface {
+    padding: 20px 15px;
+    margin-bottom: 30px;
+  }
+
+  .journey-header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+
+  .journey-classification {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .journey-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .journey-subtitle {
+    font-size: 14px;
+  }
+
+  .journey-cards-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .journey-card {
+    padding: 20px 15px;
+    min-height: auto;
+  }
+
+  .card-title {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .card-preview {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .target-quote {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .method-item {
+    font-size: 12px;
+    padding: 8px 0;
+  }
+
+  .critical-design-rule {
+    padding: 15px;
+    margin-top: 25px;
+  }
+
+  .rule-text {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  /* Deployed agents section responsiveness */
+  .deployed-agents-section {
+    padding: 20px 15px;
+    margin-bottom: 30px;
+  }
+
+  .agents-classification {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .agents-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .agents-subtitle {
+    font-size: 14px;
+  }
+
+  .agents-gallery {
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+  }
+
+  .agent-photo-container {
+    width: 120px;
+    height: 120px;
+  }
+
+  .agent-codename {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+
+  .doctrine-title {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .doctrine-preview {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .principle-title {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .principle-content {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  /* Remember section responsiveness */
+  .remember-section {
+    padding: 20px 15px;
+    margin-bottom: 30px;
+  }
+
+  .remember-classification {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .remember-title {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
+  .remember-goal {
+    font-size: 16px;
+    line-height: 1.4;
+    margin-bottom: 15px;
+  }
+
+  .goal-quote {
+    font-size: 16px;
+    display: block;
+    margin-top: 10px;
+  }
+
+  .remember-action {
+    font-size: 14px;
+    padding: 15px;
+  }
+
+  /* Mission success section responsiveness */
+  .mission-success-section {
+    padding: 20px 15px;
+    margin-bottom: 30px;
+  }
+
+  .success-classification {
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .success-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .success-subtitle {
+    font-size: 14px;
+  }
+
+  .objective-title {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+
+  .success-metric-section {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+
+  .metric-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .metric-content {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  /* Protocol section responsiveness */
+  .operational-protocols-section {
+    padding: 20px 15px;
+  }
+
+  .protocols-header h2 {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .protocols-subtitle {
+    font-size: 14px;
+  }
+
+  .protocols-container {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .protocol-card {
+    padding: 15px;
+  }
+
+  .protocol-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .protocol-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .protocol-title {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  .protocol-description {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .points-label {
+    font-size: 12px;
+  }
+
+  .protocol-point {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .protocol-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* Compliance section responsiveness */
+  .compliance-section {
+    padding: 20px 15px;
+    margin-top: 30px;
+  }
+
+  .compliance-title {
+    font-size: 16px;
+    margin-bottom: 15px;
+  }
+
+  .compliance-content p {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .checklist-title {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .compliance-checklist li {
+    font-size: 12px;
+    padding: 8px 0;
+  }
+}
+
+/* Tablet specific improvements */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    padding: 40px 30px;
+  }
+
+  .overview-stats {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .rules-directive {
+    padding: 30px;
+  }
+
+  .directive-quote {
+    font-size: 20px;
+  }
+
+  .journey-cards-container {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .journey-card {
+    padding: 25px 20px;
+  }
+
+  .agents-gallery {
+    flex-direction: row;
+    justify-content: center;
+    gap: 40px;
+  }
+
+  .protocols-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .mission-specifics-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
+  }
+
+  .countdown-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+  }
+}
+
+/* Large desktop optimizations */
+@media (min-width: 1441px) {
+  .container {
+    max-width: 1400px;
+    padding: 60px 40px;
+  }
+
+  .rules-title {
+    font-size: 42px;
+  }
+
+  .directive-quote {
+    font-size: 28px;
+  }
+
+  .journey-cards-container {
+    gap: 30px;
+  }
+
+  .protocols-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+} 
