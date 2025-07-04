@@ -844,7 +844,7 @@ export default function BasecampPage() {
       </header>
 
       <TacticalAudioPlayer 
-        audioSrc={`/BASECAMP ${basecamp.id} AUDIO NEW.wav`}
+        audioSrc={`/${encodeURIComponent(`BASECAMP ${basecamp.id} AUDIO NEW.wav`)}`}
         title={`BASECAMP ${basecamp.id} MISSION AUDIO`}
       />
 
