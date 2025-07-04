@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { ArrowLeft, FileText, Folder, Layers, Target, LoaderCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
+import { TacticalAudioPlayer } from "@/components/tactical-audio-player"
 import "./basecamp.css"
 
 const jetbrainsMono = JetBrains_Mono({
@@ -841,6 +842,11 @@ export default function BasecampPage() {
         </div>
         <div className={`${jetbrainsMono.className} timestamp`}>DATASTREAM: LIVE</div>
       </header>
+
+      <TacticalAudioPlayer 
+        audioSrc={`/BASECAMP ${basecamp.id} AUDIO NEW.wav`}
+        title={`BASECAMP ${basecamp.id} MISSION AUDIO`}
+      />
 
       <div className="basecamp-container-grid">
         <motion.div

@@ -1,0 +1,389 @@
+"use client"
+
+import { useState, useEffect, useRef } from "react"
+import { Play, Pause, Volume2 } from "lucide-react"
+
+interface TacticalAudioPlayerProps {
+  audioSrc: string
+  title?: string
+}
+
+export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: TacticalAudioPlayerProps) => {
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const animationRef = useRef<number | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const analyserRef = useRef<AnalyserNode | null>(null)
+  const dataArrayRef = useRef<Uint8Array | null>(null)
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [duration, setDuration] = useState(0)
+  const [currentTime, setCurrentTime] = useState(0)
+  const [isLoaded, setIsLoaded] = useState(true) // Start as ready
+  
+  useEffect(() => {
+    const audio = audioRef.current
+    const canvas = canvasRef.current
+    
+    if (!audio || !canvas) return
+    
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    canvas.width = canvas.offsetWidth * 2
+    canvas.height = canvas.offsetHeight * 2
+    ctx.scale(2, 2)
+    
+    const updateDuration = () => {
+      if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
+        setDuration(audio.duration)
+        setIsLoaded(true)
+        console.log('Audio duration loaded:', audio.duration)
+      }
+    }
+
+    const handleLoadedMetadata = () => {
+      updateDuration()
+    }
+    
+    const handleLoadedData = () => {
+      updateDuration()
+    }
+    
+    const handleCanPlay = () => {
+      updateDuration()
+      
+      // Set up Web Audio API for real-time analysis
+      if (!audioContextRef.current) {
+        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+        const source = audioContext.createMediaElementSource(audio)
+        const analyser = audioContext.createAnalyser()
+        
+        analyser.fftSize = 128
+        analyser.smoothingTimeConstant = 0.8
+        
+        source.connect(analyser)
+        analyser.connect(audioContext.destination)
+        
+        audioContextRef.current = audioContext
+        analyserRef.current = analyser
+        dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
+      }
+    }
+    
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime)
+      // Also check for duration on every time update as a fallback
+      if (!duration) {
+        updateDuration()
+      }
+    }
+    
+    const handleEnded = () => {
+      setIsPlaying(false)
+      setCurrentTime(0)
+    }
+    
+    audio.addEventListener('loadedmetadata', handleLoadedMetadata)
+    audio.addEventListener('loadeddata', handleLoadedData)
+    audio.addEventListener('canplay', handleCanPlay)
+    audio.addEventListener('timeupdate', handleTimeUpdate)
+    audio.addEventListener('ended', handleEnded)
+    
+    return () => {
+      audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
+      audio.removeEventListener('loadeddata', handleLoadedData)
+      audio.removeEventListener('canplay', handleCanPlay)
+      audio.removeEventListener('timeupdate', handleTimeUpdate)
+      audio.removeEventListener('ended', handleEnded)
+    }
+  }, [audioSrc, duration])
+  
+  useEffect(() => {
+    if (isPlaying) {
+      drawWaveform()
+    } else {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+    
+    return () => {
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current)
+      }
+    }
+  }, [isPlaying, currentTime])
+  
+  const drawWaveform = () => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    
+    const width = canvas.offsetWidth
+    const height = canvas.offsetHeight
+    const centerY = height / 2
+    
+    // Clear canvas
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
+    ctx.fillRect(0, 0, width, height)
+    
+    // Get real audio data if available
+    let audioData: Uint8Array | null = null
+    if (isPlaying && analyserRef.current && dataArrayRef.current) {
+      analyserRef.current.getByteFrequencyData(dataArrayRef.current)
+      audioData = dataArrayRef.current
+    }
+    
+    // Draw waveform
+    const totalBars = 60
+    const barWidth = width / totalBars
+    const progress = currentTime / duration
+    
+    // Calculate center position for active audio data
+    const audioBars = audioData ? Math.min(audioData.length, 32) : 0
+    const centerStart = Math.floor((totalBars - audioBars) / 2)
+    
+    // Draw progress indicator line in the center
+    const progressX = (progress * totalBars) * barWidth
+    ctx.strokeStyle = '#00ff41'
+    ctx.lineWidth = 2
+    ctx.shadowColor = '#00ff41'
+    ctx.shadowBlur = 8
+    ctx.beginPath()
+    ctx.moveTo(progressX, 0)
+    ctx.lineTo(progressX, height)
+    ctx.stroke()
+    ctx.shadowBlur = 0
+    
+    for (let i = 0; i < totalBars; i++) {
+      const barProgress = i / totalBars
+      
+      let amplitude: number
+      const isInAudioRange = i >= centerStart && i < centerStart + audioBars
+      
+      if (audioData && isPlaying && isInAudioRange) {
+        // Use real audio data for center bars
+        const audioIndex = i - centerStart
+        amplitude = audioData[audioIndex] / 255.0
+      } else {
+        // Fallback to animated bars for outer bars or when not playing
+        amplitude = Math.sin(currentTime * 2 + i * 0.5) * 0.3 + 
+                   Math.sin(currentTime * 3 + i * 0.8) * 0.2 + 
+                   Math.sin(currentTime * 5 + i * 1.2) * 0.1
+        amplitude = Math.abs(amplitude) * 0.3
+      }
+      
+      const barHeight = amplitude * height * 0.7 + 5
+      const x = i * barWidth
+      const y = centerY - barHeight / 2
+      
+      // Enhanced coloring for center audio-responsive bars
+      if (barProgress <= progress) {
+        if (audioData && isPlaying && isInAudioRange) {
+          // Brighter for real audio data
+          const intensity = amplitude > 0.3 ? 1 : 0.7 + amplitude * 0.3
+          ctx.fillStyle = `rgba(0, 255, 65, ${intensity})`
+          ctx.shadowColor = '#00ff41'
+          ctx.shadowBlur = amplitude > 0.5 ? 8 : 4
+        } else {
+          // Standard for animated bars
+          ctx.fillStyle = 'rgba(0, 255, 65, 0.6)'
+          ctx.shadowColor = '#00ff41'
+          ctx.shadowBlur = 2
+        }
+      } else {
+        ctx.fillStyle = 'rgba(0, 255, 65, 0.2)'
+        ctx.shadowBlur = 0
+      }
+      
+      ctx.fillRect(x, y, barWidth - 2, barHeight)
+    }
+    
+    // Continue animation if playing
+    if (isPlaying) {
+      animationRef.current = requestAnimationFrame(drawWaveform)
+    }
+  }
+  
+  const togglePlayPause = async () => {
+    if (!audioRef.current) return
+    
+    try {
+      if (isPlaying) {
+        await audioRef.current.pause()
+        setIsPlaying(false)
+      } else {
+        // Resume audio context if it's suspended
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+          await audioContextRef.current.resume()
+        }
+        
+        await audioRef.current.play()
+        setIsPlaying(true)
+      }
+    } catch (error) {
+      console.error('Error controlling audio playback:', error)
+    }
+  }
+  
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60)
+    const seconds = Math.floor(time % 60)
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`
+  }
+  
+  const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current
+    if (!canvas || !duration) return
+    
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const progress = x / canvas.offsetWidth
+    const newTime = progress * duration
+    
+    if (audioRef.current) {
+      audioRef.current.currentTime = newTime
+      setCurrentTime(newTime)
+    }
+  }
+  
+  return (
+    <div className="tactical-audio-player">
+      <div className="audio-player-container">
+        <div className="audio-header">
+          <div className="audio-title">
+            <Volume2 className="audio-icon" />
+            <span>{title}</span>
+          </div>
+          <div className="audio-time">
+            {formatTime(currentTime)} / {formatTime(duration)}
+          </div>
+        </div>
+        
+        <div className="audio-controls">
+          <button 
+            className="play-pause-btn"
+            onClick={togglePlayPause}
+            disabled={!isLoaded}
+          >
+            {isPlaying ? <Pause className="control-icon" /> : <Play className="control-icon" />}
+          </button>
+          
+          <div className="waveform-container">
+            <canvas 
+              ref={canvasRef}
+              className="waveform-canvas"
+              onClick={handleCanvasClick}
+            />
+          </div>
+        </div>
+        
+        <audio 
+          ref={audioRef}
+          src={audioSrc}
+          preload="metadata"
+        />
+      </div>
+      
+      <style jsx>{`
+        .tactical-audio-player {
+          margin: 2rem 0;
+          padding: 1.5rem;
+          background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 255, 65, 0.05) 100%);
+          border: 1px solid rgba(0, 255, 65, 0.3);
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0, 255, 65, 0.1);
+        }
+        
+        .audio-player-container {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+        }
+        
+        .audio-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 0.5rem;
+        }
+        
+        .audio-title {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #00ff41;
+          font-family: 'JetBrains Mono', monospace;
+          font-weight: 600;
+          font-size: 0.9rem;
+        }
+        
+        .audio-icon {
+          width: 18px;
+          height: 18px;
+        }
+        
+        .audio-time {
+          color: #00ff41;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.8rem;
+          opacity: 0.8;
+        }
+        
+        .audio-controls {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+        }
+        
+        .play-pause-btn {
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          border: 2px solid #00ff41;
+          background: rgba(0, 255, 65, 0.1);
+          color: #00ff41;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          flex-shrink: 0;
+        }
+        
+        .play-pause-btn:hover {
+          background: rgba(0, 255, 65, 0.2);
+          box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+        }
+        
+        .play-pause-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .control-icon {
+          width: 20px;
+          height: 20px;
+        }
+        
+        .waveform-container {
+          flex: 1;
+          height: 80px;
+          border: 1px solid rgba(0, 255, 65, 0.3);
+          border-radius: 8px;
+          background: rgba(0, 0, 0, 0.8);
+          overflow: hidden;
+          cursor: pointer;
+        }
+        
+        .waveform-canvas {
+          width: 100%;
+          height: 100%;
+          display: block;
+        }
+      `}</style>
+    </div>
+  )
+} 
