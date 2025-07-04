@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Play, Pause, Volume2 } from "lucide-react"
+import { Play, Pause, Volume2, AlertCircle } from "lucide-react"
 
 interface TacticalAudioPlayerProps {
   audioSrc: string
@@ -15,10 +15,13 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
   const dataArrayRef = useRef<Uint8Array | null>(null)
+  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
-  const [isLoaded, setIsLoaded] = useState(true) // Start as ready
+  const [isLoaded, setIsLoaded] = useState(false)
+  const [audioError, setAudioError] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
   
   useEffect(() => {
     const audio = audioRef.current
@@ -37,6 +40,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
       if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
         setDuration(audio.duration)
         setIsLoaded(true)
+        setAudioError(null)
         console.log('Audio duration loaded:', audio.duration)
       }
     }
@@ -51,23 +55,6 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     
     const handleCanPlay = () => {
       updateDuration()
-      
-      // Set up Web Audio API for real-time analysis
-      if (!audioContextRef.current) {
-        const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-        const source = audioContext.createMediaElementSource(audio)
-        const analyser = audioContext.createAnalyser()
-        
-        analyser.fftSize = 128
-        analyser.smoothingTimeConstant = 0.8
-        
-        source.connect(analyser)
-        analyser.connect(audioContext.destination)
-        
-        audioContextRef.current = audioContext
-        analyserRef.current = analyser
-        dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
-      }
     }
     
     const handleTimeUpdate = () => {
@@ -83,11 +70,24 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
       setCurrentTime(0)
     }
     
+    const handleError = (e: Event) => {
+      console.error('Audio loading error:', e)
+      setAudioError('Failed to load audio file')
+      setIsLoaded(false)
+    }
+    
+    const handleLoadStart = () => {
+      setAudioError(null)
+      console.log('Audio loading started')
+    }
+    
     audio.addEventListener('loadedmetadata', handleLoadedMetadata)
     audio.addEventListener('loadeddata', handleLoadedData)
     audio.addEventListener('canplay', handleCanPlay)
     audio.addEventListener('timeupdate', handleTimeUpdate)
     audio.addEventListener('ended', handleEnded)
+    audio.addEventListener('error', handleError)
+    audio.addEventListener('loadstart', handleLoadStart)
     
     return () => {
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
@@ -95,8 +95,45 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
       audio.removeEventListener('canplay', handleCanPlay)
       audio.removeEventListener('timeupdate', handleTimeUpdate)
       audio.removeEventListener('ended', handleEnded)
+      audio.removeEventListener('error', handleError)
+      audio.removeEventListener('loadstart', handleLoadStart)
     }
   }, [audioSrc, duration])
+  
+  const initializeAudioContext = async () => {
+    const audio = audioRef.current
+    if (!audio || audioContextRef.current) return
+    
+    try {
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      
+      // Resume audio context if it's suspended
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume()
+      }
+      
+      const source = audioContext.createMediaElementSource(audio)
+      const analyser = audioContext.createAnalyser()
+      
+      analyser.fftSize = 128
+      analyser.smoothingTimeConstant = 0.8
+      
+      source.connect(analyser)
+      analyser.connect(audioContext.destination)
+      
+      audioContextRef.current = audioContext
+      analyserRef.current = analyser
+      dataArrayRef.current = new Uint8Array(analyser.frequencyBinCount)
+      sourceRef.current = source
+      
+      setIsInitialized(true)
+      console.log('Audio context initialized successfully')
+    } catch (error) {
+      console.error('Failed to initialize audio context:', error)
+      // Continue without Web Audio API visualization
+      setIsInitialized(true)
+    }
+  }
   
   useEffect(() => {
     if (isPlaying) {
@@ -132,14 +169,19 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     // Get real audio data if available
     let audioData: Uint8Array | null = null
     if (isPlaying && analyserRef.current && dataArrayRef.current) {
-      analyserRef.current.getByteFrequencyData(dataArrayRef.current)
-      audioData = dataArrayRef.current
+      try {
+        analyserRef.current.getByteFrequencyData(dataArrayRef.current)
+        audioData = dataArrayRef.current
+      } catch (error) {
+        // Fallback to animated bars if Web Audio API fails
+        console.warn('Web Audio API data retrieval failed, using fallback animation')
+      }
     }
     
     // Draw waveform
     const totalBars = 60
     const barWidth = width / totalBars
-    const progress = currentTime / duration
+    const progress = duration > 0 ? currentTime / duration : 0
     
     // Calculate center position for active audio data
     const audioBars = audioData ? Math.min(audioData.length, 32) : 0
@@ -215,20 +257,29 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         await audioRef.current.pause()
         setIsPlaying(false)
       } else {
-        // Resume audio context if it's suspended
+        // Initialize audio context on first play (required by browsers)
+        if (!isInitialized) {
+          await initializeAudioContext()
+        }
+        
+        // Resume audio context if it's suspended (required by browsers)
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
           await audioContextRef.current.resume()
         }
         
         await audioRef.current.play()
         setIsPlaying(true)
+        setAudioError(null)
       }
     } catch (error) {
       console.error('Error controlling audio playback:', error)
+      setAudioError('Failed to play audio. Please try again.')
+      setIsPlaying(false)
     }
   }
   
   const formatTime = (time: number) => {
+    if (!isFinite(time) || isNaN(time)) return '0:00'
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
     return `${minutes}:${seconds.toString().padStart(2, '0')}`
@@ -236,16 +287,18 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
   
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current
-    if (!canvas || !duration) return
+    if (!canvas || !duration || !audioRef.current) return
     
     const rect = canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
     const progress = x / canvas.offsetWidth
     const newTime = progress * duration
     
-    if (audioRef.current) {
+    try {
       audioRef.current.currentTime = newTime
       setCurrentTime(newTime)
+    } catch (error) {
+      console.error('Error seeking audio:', error)
     }
   }
   
@@ -262,11 +315,19 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           </div>
         </div>
         
+        {audioError && (
+          <div className="audio-error">
+            <AlertCircle className="error-icon" />
+            <span>{audioError}</span>
+          </div>
+        )}
+        
         <div className="audio-controls">
           <button 
             className="play-pause-btn"
             onClick={togglePlayPause}
-            disabled={!isLoaded}
+            disabled={!isLoaded && !audioError}
+            title={audioError ? 'Audio failed to load' : isLoaded ? 'Play/Pause' : 'Loading...'}
           >
             {isPlaying ? <Pause className="control-icon" /> : <Play className="control-icon" />}
           </button>
@@ -284,6 +345,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           ref={audioRef}
           src={audioSrc}
           preload="metadata"
+          crossOrigin="anonymous"
         />
       </div>
       
@@ -332,6 +394,24 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           opacity: 0.8;
         }
         
+        .audio-error {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #ff6b6b;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.8rem;
+          background: rgba(255, 107, 107, 0.1);
+          padding: 0.5rem;
+          border-radius: 4px;
+          border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        
+        .error-icon {
+          width: 14px;
+          height: 14px;
+        }
+        
         .audio-controls {
           display: flex;
           align-items: center;
@@ -353,7 +433,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           flex-shrink: 0;
         }
         
-        .play-pause-btn:hover {
+        .play-pause-btn:hover:not(:disabled) {
           background: rgba(0, 255, 65, 0.2);
           box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
         }
