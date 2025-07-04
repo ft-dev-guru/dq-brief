@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Play, Pause, Volume2, AlertCircle } from "lucide-react"
+import { Play, Pause, Volume2, AlertCircle, Download } from "lucide-react"
 
 interface TacticalAudioPlayerProps {
   audioSrc: string
@@ -24,6 +24,27 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
   const [audioError, setAudioError] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
+  const [formatUnsupported, setFormatUnsupported] = useState(false)
+  
+  // Check if browser supports the audio format
+  const checkAudioSupport = () => {
+    const audio = document.createElement('audio')
+    const canPlayWav = audio.canPlayType('audio/wav')
+    const canPlayWebm = audio.canPlayType('audio/webm')
+    const canPlayMp3 = audio.canPlayType('audio/mpeg')
+    
+    console.log('Audio format support:', {
+      wav: canPlayWav,
+      webm: canPlayWebm,
+      mp3: canPlayMp3
+    })
+    
+    return {
+      wav: canPlayWav !== '',
+      webm: canPlayWebm !== '',
+      mp3: canPlayMp3 !== ''
+    }
+  }
   
   useEffect(() => {
     const audio = audioRef.current
@@ -37,6 +58,10 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     canvas.width = canvas.offsetWidth * 2
     canvas.height = canvas.offsetHeight * 2
     ctx.scale(2, 2)
+    
+    // Check audio format support
+    const support = checkAudioSupport()
+    console.log('Checking audio support for:', audioSrc)
     
     // Set a loading timeout for large files
     loadTimeoutRef.current = setTimeout(() => {
@@ -52,6 +77,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         setDuration(audio.duration)
         setIsLoaded(true)
         setAudioError(null)
+        setFormatUnsupported(false)
         if (loadTimeoutRef.current) {
           clearTimeout(loadTimeoutRef.current)
           loadTimeoutRef.current = null
@@ -107,10 +133,12 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
             errorMessage = 'Network error loading audio'
             break
           case target.error.MEDIA_ERR_DECODE:
-            errorMessage = 'Audio file is corrupted'
+            errorMessage = 'Audio file format is not compatible with this browser'
+            setFormatUnsupported(true)
             break
           case target.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
-            errorMessage = 'Audio format not supported'
+            errorMessage = 'Audio format is not supported by this browser'
+            setFormatUnsupported(true)
             break
         }
       }
@@ -126,6 +154,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     const handleLoadStart = () => {
       setAudioError(null)
       setLoadingProgress(0)
+      setFormatUnsupported(false)
       console.log('Audio loading started for:', audioSrc)
     }
     
@@ -387,6 +416,15 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     return 'Loading...'
   }
   
+  const handleDownload = () => {
+    const link = document.createElement('a')
+    link.href = audioSrc
+    link.download = `${title}.wav`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+  
   return (
     <div className="tactical-audio-player">
       <div className="audio-player-container">
@@ -404,6 +442,15 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           <div className="audio-error">
             <AlertCircle className="error-icon" />
             <span>{audioError}</span>
+            {formatUnsupported && (
+              <div className="format-help">
+                <p>This audio file uses a WAV format that isn't supported by web browsers.</p>
+                <button onClick={handleDownload} className="download-btn">
+                  <Download className="download-icon" />
+                  Download Audio File
+                </button>
+              </div>
+            )}
           </div>
         )}
         
@@ -493,7 +540,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         
         .audio-error {
           display: flex;
-          align-items: center;
+          flex-direction: column;
           gap: 0.5rem;
           color: #ff6b6b;
           font-family: 'JetBrains Mono', monospace;
@@ -507,6 +554,43 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         .error-icon {
           width: 14px;
           height: 14px;
+        }
+        
+        .format-help {
+          margin-top: 0.5rem;
+          padding-top: 0.5rem;
+          border-top: 1px solid rgba(255, 107, 107, 0.3);
+        }
+        
+        .format-help p {
+          margin: 0 0 0.5rem 0;
+          font-size: 0.75rem;
+          opacity: 0.9;
+        }
+        
+        .download-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          background: rgba(255, 107, 107, 0.2);
+          border: 1px solid rgba(255, 107, 107, 0.5);
+          color: #ff6b6b;
+          padding: 0.5rem 1rem;
+          border-radius: 4px;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.75rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .download-btn:hover {
+          background: rgba(255, 107, 107, 0.3);
+          border-color: #ff6b6b;
+        }
+        
+        .download-icon {
+          width: 12px;
+          height: 12px;
         }
         
         .loading-progress {
