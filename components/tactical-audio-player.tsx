@@ -16,12 +16,14 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
   const analyserRef = useRef<AnalyserNode | null>(null)
   const dataArrayRef = useRef<Uint8Array | null>(null)
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null)
+  const loadTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
   const [audioError, setAudioError] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [loadingProgress, setLoadingProgress] = useState(0)
   
   useEffect(() => {
     const audio = audioRef.current
@@ -36,31 +38,52 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     canvas.height = canvas.offsetHeight * 2
     ctx.scale(2, 2)
     
+    // Set a loading timeout for large files
+    loadTimeoutRef.current = setTimeout(() => {
+      if (!isLoaded && !audioError) {
+        console.warn('Audio loading timeout - trying to enable anyway')
+        setIsLoaded(true)
+        setAudioError(null)
+      }
+    }, 10000) // 10 second timeout
+    
     const updateDuration = () => {
       if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
         setDuration(audio.duration)
         setIsLoaded(true)
         setAudioError(null)
+        if (loadTimeoutRef.current) {
+          clearTimeout(loadTimeoutRef.current)
+          loadTimeoutRef.current = null
+        }
         console.log('Audio duration loaded:', audio.duration)
       }
     }
 
     const handleLoadedMetadata = () => {
+      console.log('Audio metadata loaded')
       updateDuration()
     }
     
     const handleLoadedData = () => {
+      console.log('Audio data loaded')
       updateDuration()
     }
     
     const handleCanPlay = () => {
+      console.log('Audio can play')
+      updateDuration()
+    }
+    
+    const handleCanPlayThrough = () => {
+      console.log('Audio can play through')
       updateDuration()
     }
     
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime)
       // Also check for duration on every time update as a fallback
-      if (!duration) {
+      if (!duration && audio.duration) {
         updateDuration()
       }
     }
@@ -72,33 +95,88 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     
     const handleError = (e: Event) => {
       console.error('Audio loading error:', e)
-      setAudioError('Failed to load audio file')
+      const target = e.target as HTMLAudioElement
+      let errorMessage = 'Failed to load audio file'
+      
+      if (target?.error) {
+        switch (target.error.code) {
+          case target.error.MEDIA_ERR_ABORTED:
+            errorMessage = 'Audio loading was aborted'
+            break
+          case target.error.MEDIA_ERR_NETWORK:
+            errorMessage = 'Network error loading audio'
+            break
+          case target.error.MEDIA_ERR_DECODE:
+            errorMessage = 'Audio file is corrupted'
+            break
+          case target.error.MEDIA_ERR_SRC_NOT_SUPPORTED:
+            errorMessage = 'Audio format not supported'
+            break
+        }
+      }
+      
+      setAudioError(errorMessage)
       setIsLoaded(false)
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current)
+        loadTimeoutRef.current = null
+      }
     }
     
     const handleLoadStart = () => {
       setAudioError(null)
-      console.log('Audio loading started')
+      setLoadingProgress(0)
+      console.log('Audio loading started for:', audioSrc)
+    }
+    
+    const handleProgress = () => {
+      if (audio.buffered.length > 0) {
+        const bufferedEnd = audio.buffered.end(audio.buffered.length - 1)
+        const duration = audio.duration || 0
+        if (duration > 0) {
+          const progress = (bufferedEnd / duration) * 100
+          setLoadingProgress(Math.min(progress, 100))
+        }
+      }
+    }
+    
+    const handleSuspend = () => {
+      console.log('Audio loading suspended (normal for large files)')
+    }
+    
+    const handleWaiting = () => {
+      console.log('Audio waiting for data')
     }
     
     audio.addEventListener('loadedmetadata', handleLoadedMetadata)
     audio.addEventListener('loadeddata', handleLoadedData)
     audio.addEventListener('canplay', handleCanPlay)
+    audio.addEventListener('canplaythrough', handleCanPlayThrough)
     audio.addEventListener('timeupdate', handleTimeUpdate)
     audio.addEventListener('ended', handleEnded)
     audio.addEventListener('error', handleError)
     audio.addEventListener('loadstart', handleLoadStart)
+    audio.addEventListener('progress', handleProgress)
+    audio.addEventListener('suspend', handleSuspend)
+    audio.addEventListener('waiting', handleWaiting)
     
     return () => {
+      if (loadTimeoutRef.current) {
+        clearTimeout(loadTimeoutRef.current)
+      }
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
       audio.removeEventListener('loadeddata', handleLoadedData)
       audio.removeEventListener('canplay', handleCanPlay)
+      audio.removeEventListener('canplaythrough', handleCanPlayThrough)
       audio.removeEventListener('timeupdate', handleTimeUpdate)
       audio.removeEventListener('ended', handleEnded)
       audio.removeEventListener('error', handleError)
       audio.removeEventListener('loadstart', handleLoadStart)
+      audio.removeEventListener('progress', handleProgress)
+      audio.removeEventListener('suspend', handleSuspend)
+      audio.removeEventListener('waiting', handleWaiting)
     }
-  }, [audioSrc, duration])
+  }, [audioSrc, duration, isLoaded, audioError])
   
   const initializeAudioContext = async () => {
     const audio = audioRef.current
@@ -302,6 +380,13 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     }
   }
   
+  const getButtonTitle = () => {
+    if (audioError) return 'Audio failed to load'
+    if (isLoaded) return 'Play/Pause'
+    if (loadingProgress > 0) return `Loading... ${Math.round(loadingProgress)}%`
+    return 'Loading...'
+  }
+  
   return (
     <div className="tactical-audio-player">
       <div className="audio-player-container">
@@ -322,12 +407,24 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           </div>
         )}
         
+        {!isLoaded && !audioError && loadingProgress > 0 && (
+          <div className="loading-progress">
+            <div className="progress-bar">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${loadingProgress}%` }}
+              />
+            </div>
+            <span className="progress-text">Loading... {Math.round(loadingProgress)}%</span>
+          </div>
+        )}
+        
         <div className="audio-controls">
           <button 
             className="play-pause-btn"
             onClick={togglePlayPause}
             disabled={!isLoaded && !audioError}
-            title={audioError ? 'Audio failed to load' : isLoaded ? 'Play/Pause' : 'Loading...'}
+            title={getButtonTitle()}
           >
             {isPlaying ? <Pause className="control-icon" /> : <Play className="control-icon" />}
           </button>
@@ -410,6 +507,34 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         .error-icon {
           width: 14px;
           height: 14px;
+        }
+        
+        .loading-progress {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          color: #00ff41;
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 0.8rem;
+        }
+        
+        .progress-bar {
+          flex: 1;
+          height: 4px;
+          background: rgba(0, 255, 65, 0.2);
+          border-radius: 2px;
+          overflow: hidden;
+        }
+        
+        .progress-fill {
+          height: 100%;
+          background: #00ff41;
+          transition: width 0.3s ease;
+        }
+        
+        .progress-text {
+          white-space: nowrap;
+          opacity: 0.8;
         }
         
         .audio-controls {
