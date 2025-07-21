@@ -303,6 +303,12 @@ export default function MissionRulesPage() {
         const data = await response.json()
         console.log('API Response:', data) // Debug log
         
+        // Check if the response is an error from n8n (even if HTTP 200)
+        if (data && typeof data === 'object' && data.code && data.message) {
+          console.log('n8n error response detected:', data) // Debug log
+          throw new Error(`n8n webhook error: ${data.message}`)
+        }
+        
         // Handle different possible response structures
         if (Array.isArray(data)) {
           console.log('Array data received, first item keys:', Object.keys(data[0] || {})) // Debug log
@@ -365,6 +371,9 @@ export default function MissionRulesPage() {
       } catch (err) {
         console.error('Failed to fetch mission rules:', err)
         setError(err instanceof Error ? err.message : 'Failed to fetch mission rules')
+        // Ensure we clear any existing data when there's an error
+        setApiData([])
+        setParsedSections([])
       } finally {
         setIsLoading(false)
       }
@@ -399,8 +408,9 @@ export default function MissionRulesPage() {
   ]
 
   // Use parsed sections if available, otherwise API data, otherwise fallback rules
+  // Show fallback rules when there's an error OR when no data is available
   const rules = parsedSections.length > 0 ? parsedSections : 
-                (apiData.length > 0 ? apiData : (error ? fallbackRules : []))
+                (apiData.length > 0 ? apiData : fallbackRules)
 
   // Calculate stats from current rules
   const criticalCount = rules.filter(rule => {
@@ -452,223 +462,8 @@ export default function MissionRulesPage() {
           </div>
         </div>
 
-        <div className="rules-overview">
-          <div className="overview-stats">
-            <div className="stat-card critical">
-              <div className={`${jetbrainsMono.className} stat-number`}>{criticalCount}</div>
-              <div className={`${jetbrainsMono.className} stat-label`}>CRITICAL PROTOCOLS</div>
-            </div>
-            <div className="stat-card standard">
-              <div className={`${jetbrainsMono.className} stat-number`}>{standardCount}</div>
-              <div className={`${jetbrainsMono.className} stat-label`}>STANDARD PROTOCOLS</div>
-            </div>
-            <div className="stat-card total">
-              <div className={`${jetbrainsMono.className} stat-number`}>{totalCount}</div>
-              <div className={`${jetbrainsMono.className} stat-label`}>TOTAL ACTIVE RULES</div>
-            </div>
-          </div>
-        </div>
-
         <div className="rules-section">
-          <div className="section-header">
-            <Shield className="w-6 h-6 text-green-400" />
-            <h2 className={`${jetbrainsMono.className} section-title`}>OPERATIONAL PROTOCOLS</h2>
-          </div>
-          
-          {/* Debug info - remove in production */}
-          {!isLoading && (
-            <div className={`${jetbrainsMono.className}`} style={{color: '#ff6b00', fontSize: '12px', marginBottom: '20px'}}>
-              <div>DEBUG: Parsed sections: {parsedSections.length}, API data: {apiData.length}, Rules: {rules.length}</div>
-              {apiData.length > 0 && (
-                <div style={{marginTop: '5px', fontSize: '10px'}}>
-                  API Data Keys: {JSON.stringify(Object.keys(apiData[0] || {}))}
-                </div>
-              )}
-            </div>
-          )}
-          
-          {isLoading ? (
-            <div className="loading-state">
-              <Loader2 className="w-8 h-8 animate-spin text-green-400" />
-              <div className={`${jetbrainsMono.className} loading-text`}>
-                DECRYPTING MISSION PROTOCOLS...
-              </div>
-            </div>
-          ) : error ? (
-            <div className="error-state">
-              <AlertTriangle className="w-8 h-8 text-red-400" />
-              <div className={`${jetbrainsMono.className} error-text`}>
-                COMMUNICATION ERROR: {error}
-              </div>
-              <div className="error-fallback">
-                <div className={`${jetbrainsMono.className} fallback-text`}>
-                  ACTIVATING BACKUP PROTOCOLS...
-                </div>
-              </div>
-            </div>
-          ) : rules.length === 0 ? (
-            <div className="no-data-state">
-              <div className={`${jetbrainsMono.className} no-data-text`}>
-                NO PROTOCOLS LOADED
-              </div>
-              {apiData.length > 0 && (
-                <div style={{color: '#ccc', fontSize: '12px', marginTop: '10px'}}>
-                  Raw API data available but not parsed. Check console for details.
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="rules-container">
-              {/* Mission Specifics Section - TACTICAL COMMAND CENTER */}
-              {rules.filter(rule => 'isHero' in rule && rule.isHero).map((rule, index) => {
-                const ruleId = rule.id || `RULE-${String(index + 1).padStart(3, '0')}`
-                const heroData = parseHeroContent(rule.content || '')
-                return (
-                  <div key={ruleId} className="mission-specifics-section">
-                    <div className={`${jetbrainsMono.className} mission-specifics-header`}>
-                      <div className="specifics-classification">MISSION SPECIFICS</div>
-                      <div className="specifics-subtitle">Critical project parameters that determine success or failure</div>
-                    </div>
-                    
-                    <div className="mission-specifics-container">
-                      {/* DEADLINE - Mission Clock */}
-                      <div className="deadline-terminal">
-                        <div className="terminal-header">
-                          <div>
-                            <div className={`${jetbrainsMono.className} terminal-title`}>DEADLINE - Mission Clock</div>
-                            <div className="terminal-subtitle">We move fast here. Four weeks to first draft. Two weeks to perfection.</div>
-                          </div>
-                        </div>
-                        
-                        <div className="mission-timeline">
-                          <div className={`${jetbrainsMono.className} timeline-label`}>MISSION TIMELINE</div>
-                          <div className="countdown-grid">
-                            <div className="countdown-phase">
-                              <div className={`${jetbrainsMono.className} phase-label`}>DRAFT PHASE</div>
-                              <div className="phase-timer">{draftCountdown}</div>
-                              <div className="phase-description">DAYS:HRS:MIN:SEC</div>
-                            </div>
-                            <div className={`countdown-phase ${perfectionCountdown === "14:00:00:00" ? "waiting" : ""}`}>
-                              <div className={`${jetbrainsMono.className} phase-label`}>PERFECTION PHASE</div>
-                              <div className="phase-timer">{perfectionCountdown}</div>
-                              <div className="phase-description">DAYS:HRS:MIN:SEC</div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* BUDGET - Resource Allocation */}
-                      <div className="budget-terminal">
-                        <div className="budget-header">
-                          <div>
-                            <div className={`${jetbrainsMono.className} budget-title`}>BUDGET - Resource Allocation</div>
-                            <div className="budget-subtitle">Whatever it takes to make this legendary</div>
-                          </div>
-                        </div>
-                        
-                        <div className="resource-terminal">
-                          <div className="terminal-line">
-                            <span>RESOURCE STATUS:</span>
-                            <span>UNLIMITED</span>
-                          </div>
-                          <div className="terminal-line">
-                            <span>AUTHORIZATION:</span>
-                            <span>APPROVED</span>
-                          </div>
-                          <div className="terminal-line">
-                            <span>FUNDING LEVEL:</span>
-                            <span>MAXIMUM</span>
-                          </div>
-                          <div className="terminal-line">
-                            <span>PROJECT CODE:</span>
-                            <span>LEGENDARY-CLASS</span>
-                          </div>
-                          <div className="budget-secret">BUDGET CEILING: CLASSIFIED</div>
-                        </div>
-                      </div>
-
-                      {/* STAKES - Threat Assessment */}
-                      <div className="stakes-terminal">
-                        <div className="stakes-header">
-                          <div>
-                            <div className={`${jetbrainsMono.className} stakes-title`}>STAKES - Threat Assessment</div>
-                            <div className="stakes-subtitle">This diagnostic will define Fast Track. Make it unforgettable.</div>
-                          </div>
-                        </div>
-                        
-                        <div className="threat-matrix">
-                          <div className={`${jetbrainsMono.className} matrix-header`}>MISSION CRITICALITY</div>
-                          <div className="threat-levels">
-                            <div className="threat-level legendary">
-                              <div className="threat-indicator">▲</div>
-                              <div className="threat-label">LEGENDARY</div>
-                            </div>
-                            <div className="threat-level">
-                              <div className="threat-indicator">▲</div>
-                              <div className="threat-label">CRITICAL</div>
-                            </div>
-                            <div className="threat-level">
-                              <div className="threat-indicator">▲</div>
-                              <div className="threat-label">HIGH</div>
-                            </div>
-                            <div className="threat-level">
-                              <div className="threat-indicator">▲</div>
-                              <div className="threat-label">MODERATE</div>
-                            </div>
-                            <div className="threat-level">
-                              <div className="threat-indicator">▲</div>
-                              <div className="threat-label">LOW</div>
-                            </div>
-                          </div>
-                          <div className={`${jetbrainsMono.className} stakes-status`}>STAKES: INDUSTRY DEFINING</div>
-                          <div className="failure-warning">FAILURE IS NOT AN OPTION</div>
-                        </div>
-                      </div>
-
-                      {/* QUESTIONS - Communication Status */}
-                      <div className="questions-terminal">
-                        <div className="questions-header">
-                          <div>
-                            <div className={`${jetbrainsMono.className} questions-title`}>QUESTIONS - Communication Status</div>
-                            <div className="questions-subtitle">None. You're the best designer in the world. Figure it out.</div>
-                          </div>
-                        </div>
-                        
-                        <div className="comm-panel">
-                          <div className="comm-line">
-                            <span>COMM CHANNEL:</span>
-                            <span className="status-closed">CLOSED</span>
-                          </div>
-                          <div className="comm-line">
-                            <span>INCOMING QUERIES:</span>
-                            <span>0</span>
-                          </div>
-                          <div className="comm-line">
-                            <span>STATUS:</span>
-                            <span>RADIO SILENCE</span>
-                          </div>
-                          <div className="comm-line">
-                            <span>CLEARANCE:</span>
-                            <span>FIGURE IT OUT</span>
-                          </div>
-                          <div className="access-denied">ACCESS DENIED</div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* MISSION DIRECTIVE - Command Banner */}
-                    <div className="mission-directive-banner">
-                      <div className="directive-header">
-                        <div className={`${jetbrainsMono.className} directive-title`}>MISSION DIRECTIVE</div>
-                      </div>
-                      <div className="directive-quote">
-                        Now go create something that breaks the industry.
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-
+          <div className="rules-container">
               {/* Mission Success Section - Always First */}
               <div className="mission-success-section">
                 <div className={`${jetbrainsMono.className} success-header`}>
@@ -840,31 +635,19 @@ export default function MissionRulesPage() {
                 <div className="agents-gallery">
                   <div className="agent-profile">
                     <div className="agent-photo-container">
-                      <img 
-                        src="/images/jobs_photo.png" 
-                        alt="Agent Jobs" 
-                        className="agent-photo"
-                      />
+                      <img src="/images/jobs_photo.png" alt="Agent Jobs" className="agent-photo" />
                     </div>
                     <div className={`${jetbrainsMono.className} agent-codename`}>JOBS</div>
                   </div>
-                  
                   <div className="agent-profile">
                     <div className="agent-photo-container">
-                      <img 
-                        src="/images/ive_photo.png" 
-                        alt="Agent Ive" 
-                        className="agent-photo"
-                      />
+                      <img src="/images/ive_photo.png" alt="Agent Ive" className="agent-photo" />
                     </div>
                     <div className={`${jetbrainsMono.className} agent-codename`}>IVE</div>
                   </div>
                 </div>
                 
-                <div 
-                  className={`tactical-doctrine-card ${agentsExpanded ? 'expanded' : ''}`}
-                  onClick={() => setAgentsExpanded(!agentsExpanded)}
-                >
+                <div className={`tactical-doctrine-card ${agentsExpanded ? 'expanded' : ''}`} onClick={() => setAgentsExpanded(!agentsExpanded)}>
                   <div className="doctrine-header">
                     <div className={`${jetbrainsMono.className} doctrine-title`}>TACTICAL DOCTRINE</div>
                     <div className="doctrine-indicator">{agentsExpanded ? '−' : '+'}</div>
@@ -872,28 +655,28 @@ export default function MissionRulesPage() {
                   <div className="doctrine-preview">Core principles from successful field operations</div>
                   <div className="doctrine-expanded-content">
                     <div className="doctrine-principle">
-                      <div className="principle-title">Ruthless Simplicity</div>
+                      <div className={`${jetbrainsMono.className} principle-title`}>RUTHLESS SIMPLICITY</div>
                       <div className="principle-content">
                         Strip everything that doesn't matter. Complex insights delivered with surgical precision. Empty space speaks louder than clutter.
                       </div>
                     </div>
                     
                     <div className="doctrine-principle">
-                      <div className="principle-title">Emotional Minimalism</div>
+                      <div className={`${jetbrainsMono.className} principle-title`}>EMOTIONAL MINIMALISM</div>
                       <div className="principle-content">
                         Clean doesn't mean cold. Use restraint to amplify impact. One powerful visual beats ten weak ones.
                       </div>
                     </div>
                     
                     <div className="doctrine-principle">
-                      <div className="principle-title">Truth as Beauty</div>
+                      <div className={`${jetbrainsMono.className} principle-title`}>TRUTH AS BEAUTY</div>
                       <div className="principle-content">
                         Don't decorate data—reveal it. Make ugly truths elegant. Make complex simple.
                       </div>
                     </div>
                     
                     <div className="doctrine-principle">
-                      <div className="principle-title">Story-Driven Structure</div>
+                      <div className={`${jetbrainsMono.className} principle-title`}>STORY-DRIVEN STRUCTURE</div>
                       <div className="principle-content">
                         Every page flows to the next. Build tension. Release insight. Create momentum.
                       </div>
@@ -962,7 +745,6 @@ export default function MissionRulesPage() {
                 </button>
               </div>
             </div>
-          )}
         </div>
       </div>
     </main>

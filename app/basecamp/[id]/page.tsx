@@ -657,18 +657,18 @@ const parseBriefContent = (content: string) => {
     detectedScore = scoreMatch[0].toLowerCase();
   }
 
-  // Define the 7 sections we're looking for
+  // Define the 7 sections we're looking for with simpler regex patterns
   const sectionPatterns = [
-    { key: 'humanProblem', title: 'The Human Problem', pattern: /(?:1\.\s*)?(?:The\s+)?Human\s+Problem:?\s*(.+?)(?=(?:\d+\.\s*(?:The\s+)?(?:Core\s+Idea|Desired\s+Feeling|Unified\s+Visual|Narrative\s+Arc|Revealing\s+the\s+Truth|Intensity\s+Level))|$)/is },
-    { key: 'coreIdea', title: 'The Core Idea', pattern: /(?:2\.\s*)?(?:The\s+)?Core\s+Idea:?\s*(.+?)(?=(?:\d+\.\s*(?:The\s+)?(?:Desired\s+Feeling|Unified\s+Visual|Narrative\s+Arc|Revealing\s+the\s+Truth|Intensity\s+Level))|$)/is },
-    { key: 'desiredFeeling', title: 'The Desired Feeling', pattern: /(?:3\.\s*)?(?:The\s+)?Desired\s+Feeling:?\s*(.+?)(?=(?:\d+\.\s*(?:The\s+)?(?:Unified\s+Visual|Narrative\s+Arc|Revealing\s+the\s+Truth|Intensity\s+Level))|$)/is },
-    { key: 'unifiedVisual', title: 'The Unified Visual System', pattern: /(?:4\.\s*)?(?:The\s+)?Unified\s+Visual\s+System:?\s*(.+?)(?=(?:\d+\.\s*(?:The\s+)?(?:Narrative\s+Arc|Revealing\s+the\s+Truth|Intensity\s+Level))|$)/is },
-    { key: 'narrativeArc', title: 'The Narrative Arc', pattern: /(?:5\.\s*)?(?:The\s+)?Narrative\s+Arc:?\s*(.+?)(?=(?:\d+\.\s*(?:The\s+)?(?:Revealing\s+the\s+Truth|Intensity\s+Level))|$)/is },
-    { key: 'revealingTruth', title: 'Revealing the Truth (Data & Visualization)', pattern: /(?:6\.\s*)?(?:Revealing\s+the\s+Truth|Data\s*&?\s*Visualization):?\s*(.+?)(?=(?:\d+\.\s*(?:The\s+)?Intensity\s+Level)|$)/is },
-    { key: 'intensityLevel', title: 'Intensity Level (1-10)', pattern: /(?:7\.\s*)?Intensity\s+Level\s*\(1-10\):?\s*(.+?)$/is }
+    { key: 'humanProblem', title: 'The Human Problem', pattern: /Human\s+Problem:?\s*(.+?)(?=\d+\.|$)/i },
+    { key: 'coreIdea', title: 'The Core Idea', pattern: /Core\s+Idea:?\s*(.+?)(?=\d+\.|$)/i },
+    { key: 'desiredFeeling', title: 'The Desired Feeling', pattern: /Desired\s+Feeling:?\s*(.+?)(?=\d+\.|$)/i },
+    { key: 'unifiedVisual', title: 'The Unified Visual System', pattern: /Unified\s+Visual\s+System:?\s*(.+?)(?=\d+\.|$)/i },
+    { key: 'narrativeArc', title: 'The Narrative Arc', pattern: /Narrative\s+Arc:?\s*(.+?)(?=\d+\.|$)/i },
+    { key: 'revealingTruth', title: 'Revealing the Truth (Data & Visualization)', pattern: /Revealing\s+the\s+Truth:?\s*(.+?)(?=\d+\.|$)/i },
+    { key: 'intensityLevel', title: 'Intensity Level (1-10)', pattern: /Intensity\s+Level:?\s*(.+?)$/i }
   ];
 
-  const sections = {};
+  const sections: { [key: string]: { title: string; content: string } } = {};
   let hasValidSections = false;
 
   sectionPatterns.forEach(({ key, title, pattern }) => {
@@ -676,24 +676,64 @@ const parseBriefContent = (content: string) => {
     if (match && match[1]) {
       let sectionContent = match[1].trim();
       
-      // Enhanced score highlighting with subsections - handle various patterns
-      // Pattern 1: "Critical):" or "Danger):" or "Healthy):" (with parenthesis)
-      sectionContent = sectionContent.replace(/\b(Critical)\):\s*/g, '<div class="score-subsection score-critical-section"><span class="score-label-critical">🔴 CRITICAL:</span> ');
-      sectionContent = sectionContent.replace(/\b(Danger)\):\s*/g, '<div class="score-subsection score-danger-section"><span class="score-label-danger">🟠 DANGER:</span> ');
-      sectionContent = sectionContent.replace(/\b(Healthy)\):\s*/g, '<div class="score-subsection score-healthy-section"><span class="score-label-healthy">🟢 HEALTHY:</span> ');
+      // Clean up text formatting issues first - more comprehensive approach
+      sectionContent = sectionContent.replace(/•\t/g, '• '); // Fix bullet + tab issue
+      sectionContent = sectionContent.replace(/•\s*\t/g, '• '); // Fix bullet + optional spaces + tab
+      sectionContent = sectionContent.replace(/\\\t/g, ' '); // Fix escaped tabs
+      sectionContent = sectionContent.replace(/\\t/g, ' '); // Fix literal \t strings
+      sectionContent = sectionContent.replace(/\t/g, '  '); // Replace actual tabs with spaces
+      sectionContent = sectionContent.replace(/\n\n\n+/g, '\n\n'); // Remove excessive line breaks
+      sectionContent = sectionContent.replace(/\s+\n/g, '\n'); // Remove trailing spaces before newlines
       
-      // Pattern 2: "Critical:" or "Danger:" or "Healthy:" (without parenthesis)
-      sectionContent = sectionContent.replace(/\b(Critical):\s*/g, '<div class="score-subsection score-critical-section"><span class="score-label-critical">🔴 CRITICAL:</span> ');
-      sectionContent = sectionContent.replace(/\b(Danger):\s*/g, '<div class="score-subsection score-danger-section"><span class="score-label-danger">🟠 DANGER:</span> ');
-      sectionContent = sectionContent.replace(/\b(Healthy):\s*/g, '<div class="score-subsection score-healthy-section"><span class="score-label-healthy">🟢 HEALTHY:</span> ');
+      // Remove emoji boxes that appear after score sections
+      sectionContent = sectionContent.replace(/•\s*🟥\s*/g, '• ');
+      sectionContent = sectionContent.replace(/•\s*🟧\s*/g, '• ');
+      sectionContent = sectionContent.replace(/•\s*🟩\s*/g, '• ');
+      sectionContent = sectionContent.replace(/🟥\s*/g, '');
+      sectionContent = sectionContent.replace(/🟧\s*/g, '');
+      sectionContent = sectionContent.replace(/🟩\s*/g, '');
       
-      // Close score subsection divs before next score or at specific patterns
-      sectionContent = sectionContent.replace(/(<div class="score-subsection[^>]*>.*?)(?=<div class="score-subsection|$)/gs, '$1</div>');
+      // Enhanced score highlighting with proper boundaries and line breaks
+      // First, let's clean up the cross-references that are misplaced
+      sectionContent = sectionContent.replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
       
-      // Handle standalone score mentions that aren't part of subsections
-      sectionContent = sectionContent.replace(/\b(Critical)(?![:\)])/g, '<span class="score-critical">$1</span>');
-      sectionContent = sectionContent.replace(/\b(Danger)(?![:\)])/g, '<span class="score-danger">$1</span>');
-      sectionContent = sectionContent.replace(/\b(Healthy)(?![:\)])/g, '<span class="score-healthy">$1</span>');
+      // Now split and wrap each score section, handling both direct labels and "Inspirational Spark" patterns
+      let parts = sectionContent.split(/(Critical:|Danger:|Healthy:|Inspirational Spark \(if [^)]*Critical[^)]*\):|Inspirational Spark \(if [^)]*Danger[^)]*\):|Inspirational Spark \(if [^)]*Healthy[^)]*\):)/);
+      let processedContent = '';
+      
+      for (let i = 0; i < parts.length; i++) {
+        if (parts[i] === 'Critical:' || parts[i].includes('Critical')) {
+          processedContent += '<div class="score-section score-critical-section"><span class="score-label-critical">CRITICAL:</span>';
+          if (i + 1 < parts.length) {
+            // Clean the content part of any remaining cross-references
+            let content = parts[i + 1].replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
+            processedContent += content + '</div>\n\n';
+            i++; // Skip the next part as we've processed it
+          }
+        } else if (parts[i] === 'Danger:' || parts[i].includes('Danger')) {
+          processedContent += '<div class="score-section score-danger-section"><span class="score-label-danger">DANGER:</span>';
+          if (i + 1 < parts.length) {
+            // Clean the content part of any remaining cross-references
+            let content = parts[i + 1].replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
+            processedContent += content + '</div>\n\n';
+            i++; // Skip the next part as we've processed it
+          }
+        } else if (parts[i] === 'Healthy:' || parts[i].includes('Healthy')) {
+          processedContent += '<div class="score-section score-healthy-section"><span class="score-label-healthy">HEALTHY:</span>';
+          if (i + 1 < parts.length) {
+            // Clean the content part of any remaining cross-references
+            let content = parts[i + 1].replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
+            processedContent += content + '</div>\n\n';
+            i++; // Skip the next part as we've processed it
+          }
+        } else if (i === 0 && !parts[i].match(/(Critical|Danger|Healthy)/)) {
+          // This is content before any score label - clean it too
+          let content = parts[i].replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
+          processedContent += content;
+        }
+      }
+      
+      sectionContent = processedContent;
       
       sections[key] = {
         title,
@@ -706,24 +746,64 @@ const parseBriefContent = (content: string) => {
   // If no structured sections found, return the raw content with score highlighting
   if (!hasValidSections) {
     let highlightedContent = content;
-    // Enhanced score highlighting with subsections for raw content - handle various patterns
-    // Pattern 1: "Critical):" or "Danger):" or "Healthy):" (with parenthesis)
-    highlightedContent = highlightedContent.replace(/\b(Critical)\):\s*/g, '<div class="score-subsection score-critical-section"><span class="score-label-critical">🔴 CRITICAL:</span> ');
-    highlightedContent = highlightedContent.replace(/\b(Danger)\):\s*/g, '<div class="score-subsection score-danger-section"><span class="score-label-danger">🟠 DANGER:</span> ');
-    highlightedContent = highlightedContent.replace(/\b(Healthy)\):\s*/g, '<div class="score-subsection score-healthy-section"><span class="score-label-healthy">🟢 HEALTHY:</span> ');
+    // Clean up text formatting issues - more comprehensive approach
+    highlightedContent = highlightedContent.replace(/•\t/g, '• ');
+    highlightedContent = highlightedContent.replace(/•\s*\t/g, '• '); // Fix bullet + optional spaces + tab
+    highlightedContent = highlightedContent.replace(/\\\t/g, ' '); // Fix escaped tabs
+    highlightedContent = highlightedContent.replace(/\\t/g, ' '); // Fix literal \t strings
+    highlightedContent = highlightedContent.replace(/\t/g, '  '); // Replace actual tabs with spaces
+    highlightedContent = highlightedContent.replace(/\n\n\n+/g, '\n\n'); // Remove excessive line breaks
+    highlightedContent = highlightedContent.replace(/\s+\n/g, '\n'); // Remove trailing spaces before newlines
     
-    // Pattern 2: "Critical:" or "Danger:" or "Healthy:" (without parenthesis)
-    highlightedContent = highlightedContent.replace(/\b(Critical):\s*/g, '<div class="score-subsection score-critical-section"><span class="score-label-critical">🔴 CRITICAL:</span> ');
-    highlightedContent = highlightedContent.replace(/\b(Danger):\s*/g, '<div class="score-subsection score-danger-section"><span class="score-label-danger">🟠 DANGER:</span> ');
-    highlightedContent = highlightedContent.replace(/\b(Healthy):\s*/g, '<div class="score-subsection score-healthy-section"><span class="score-label-healthy">🟢 HEALTHY:</span> ');
+    // Remove emoji boxes that appear after score sections
+    highlightedContent = highlightedContent.replace(/•\s*🟥\s*/g, '• ');
+    highlightedContent = highlightedContent.replace(/•\s*🟧\s*/g, '• ');
+    highlightedContent = highlightedContent.replace(/•\s*🟩\s*/g, '• ');
+    highlightedContent = highlightedContent.replace(/🟥\s*/g, '');
+    highlightedContent = highlightedContent.replace(/🟧\s*/g, '');
+    highlightedContent = highlightedContent.replace(/🟩\s*/g, '');
     
-    // Close score subsection divs before next score or at end
-    highlightedContent = highlightedContent.replace(/(<div class="score-subsection[^>]*>.*?)(?=<div class="score-subsection|$)/g, '$1</div>');
+    // Enhanced score highlighting with proper boundaries and line breaks
+    // First, let's clean up the cross-references that are misplaced
+    highlightedContent = highlightedContent.replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
     
-    // Handle standalone score mentions that aren't part of subsections
-    highlightedContent = highlightedContent.replace(/\b(Critical)(?![:\)])/g, '<span class="score-critical">$1</span>');
-    highlightedContent = highlightedContent.replace(/\b(Danger)(?![:\)])/g, '<span class="score-danger">$1</span>');
-    highlightedContent = highlightedContent.replace(/\b(Healthy)(?![:\)])/g, '<span class="score-healthy">$1</span>');
+    // Now split and wrap each score section, handling both direct labels and "Inspirational Spark" patterns
+    let parts = highlightedContent.split(/(Critical:|Danger:|Healthy:|Inspirational Spark \(if [^)]*Critical[^)]*\):|Inspirational Spark \(if [^)]*Danger[^)]*\):|Inspirational Spark \(if [^)]*Healthy[^)]*\):)/);
+    let processedContent = '';
+    
+    for (let i = 0; i < parts.length; i++) {
+      if (parts[i] === 'Critical:' || parts[i].includes('Critical')) {
+        processedContent += '<div class="score-section score-critical-section"><span class="score-label-critical">CRITICAL:</span>';
+        if (i + 1 < parts.length) {
+          // Clean the content part of any remaining cross-references
+          let content = parts[i + 1].replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
+          processedContent += content + '</div>\n\n';
+          i++; // Skip the next part as we've processed it
+        }
+      } else if (parts[i] === 'Danger:' || parts[i].includes('Danger')) {
+        processedContent += '<div class="score-section score-danger-section"><span class="score-label-danger">DANGER:</span>';
+        if (i + 1 < parts.length) {
+          // Clean the content part of any remaining cross-references
+          let content = parts[i + 1].replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
+          processedContent += content + '</div>\n\n';
+          i++; // Skip the next part as we've processed it
+        }
+      } else if (parts[i] === 'Healthy:' || parts[i].includes('Healthy')) {
+        processedContent += '<div class="score-section score-healthy-section"><span class="score-label-healthy">HEALTHY:</span>';
+        if (i + 1 < parts.length) {
+          // Clean the content part of any remaining cross-references
+          let content = parts[i + 1].replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
+          processedContent += content + '</div>\n\n';
+          i++; // Skip the next part as we've processed it
+        }
+      } else if (i === 0 && !parts[i].match(/(Critical|Danger|Healthy)/)) {
+        // This is content before any score label - clean it too
+        let content = parts[i].replace(/•\s*If the score is[^•]*?(?=•|$)/g, '');
+        processedContent += content;
+      }
+    }
+    
+    highlightedContent = processedContent;
     
     return { rawContent: highlightedContent, score: detectedScore };
   }

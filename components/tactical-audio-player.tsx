@@ -20,7 +20,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
   const [isPlaying, setIsPlaying] = useState(false)
   const [duration, setDuration] = useState(0)
   const [currentTime, setCurrentTime] = useState(0)
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(true) // Start as ready like working audio players
   const [audioError, setAudioError] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
@@ -70,7 +70,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         setIsLoaded(true)
         setAudioError(null)
       }
-    }, 10000) // 10 second timeout
+    }, 5000) // 5 second timeout (reduced for faster fallback)
     
     const updateDuration = () => {
       if (audio.duration && !isNaN(audio.duration) && isFinite(audio.duration)) {
@@ -144,7 +144,11 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
       }
       
       setAudioError(errorMessage)
-      setIsLoaded(false)
+      // Only disable for format errors, keep optimistic for other errors
+      if (target?.error && (target.error.code === target.error.MEDIA_ERR_DECODE || 
+          target.error.code === target.error.MEDIA_ERR_SRC_NOT_SUPPORTED)) {
+        setIsLoaded(false)
+      }
       if (loadTimeoutRef.current) {
         clearTimeout(loadTimeoutRef.current)
         loadTimeoutRef.current = null
@@ -296,10 +300,10 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
     
     // Draw progress indicator line in the center
     const progressX = (progress * totalBars) * barWidth
-    ctx.strokeStyle = '#00ff41'
+    ctx.strokeStyle = '#9ca3af'
     ctx.lineWidth = 2
-    ctx.shadowColor = '#00ff41'
-    ctx.shadowBlur = 8
+    ctx.shadowColor = '#9ca3af'
+    ctx.shadowBlur = 4
     ctx.beginPath()
     ctx.moveTo(progressX, 0)
     ctx.lineTo(progressX, height)
@@ -332,18 +336,18 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
       if (barProgress <= progress) {
         if (audioData && isPlaying && isInAudioRange) {
           // Brighter for real audio data
-          const intensity = amplitude > 0.3 ? 1 : 0.7 + amplitude * 0.3
-          ctx.fillStyle = `rgba(0, 255, 65, ${intensity})`
-          ctx.shadowColor = '#00ff41'
-          ctx.shadowBlur = amplitude > 0.5 ? 8 : 4
+          const intensity = amplitude > 0.3 ? 0.8 : 0.5 + amplitude * 0.3
+          ctx.fillStyle = `rgba(156, 163, 175, ${intensity})`
+          ctx.shadowColor = '#9ca3af'
+          ctx.shadowBlur = amplitude > 0.5 ? 4 : 2
         } else {
           // Standard for animated bars
-          ctx.fillStyle = 'rgba(0, 255, 65, 0.6)'
-          ctx.shadowColor = '#00ff41'
-          ctx.shadowBlur = 2
+          ctx.fillStyle = 'rgba(156, 163, 175, 0.6)'
+          ctx.shadowColor = '#9ca3af'
+          ctx.shadowBlur = 1
         }
       } else {
-        ctx.fillStyle = 'rgba(0, 255, 65, 0.2)'
+        ctx.fillStyle = 'rgba(156, 163, 175, 0.2)'
         ctx.shadowBlur = 0
       }
       
@@ -488,8 +492,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         <audio 
           ref={audioRef}
           src={audioSrc}
-          preload="metadata"
-          crossOrigin="anonymous"
+          preload="auto"
         />
       </div>
       
@@ -497,10 +500,10 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         .tactical-audio-player {
           margin: 2rem 0;
           padding: 1.5rem;
-          background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, rgba(0, 255, 65, 0.05) 100%);
-          border: 1px solid rgba(0, 255, 65, 0.3);
+          background: rgba(0, 0, 0, 0.2);
+          border: 1px solid #4b5563;
           border-radius: 12px;
-          box-shadow: 0 4px 20px rgba(0, 255, 65, 0.1);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
         
         .audio-player-container {
@@ -520,7 +523,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          color: #00ff41;
+          color: #d1d5db;
           font-family: 'JetBrains Mono', monospace;
           font-weight: 600;
           font-size: 0.9rem;
@@ -532,7 +535,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         }
         
         .audio-time {
-          color: #00ff41;
+          color: #9ca3af;
           font-family: 'JetBrains Mono', monospace;
           font-size: 0.8rem;
           opacity: 0.8;
@@ -597,7 +600,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           display: flex;
           align-items: center;
           gap: 1rem;
-          color: #00ff41;
+          color: #d1d5db;
           font-family: 'JetBrains Mono', monospace;
           font-size: 0.8rem;
         }
@@ -605,14 +608,14 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         .progress-bar {
           flex: 1;
           height: 4px;
-          background: rgba(0, 255, 65, 0.2);
+          background: rgba(107, 114, 128, 0.3);
           border-radius: 2px;
           overflow: hidden;
         }
         
         .progress-fill {
           height: 100%;
-          background: #00ff41;
+          background: #6b7280;
           transition: width 0.3s ease;
         }
         
@@ -631,9 +634,9 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
           width: 50px;
           height: 50px;
           border-radius: 50%;
-          border: 2px solid #00ff41;
-          background: rgba(0, 255, 65, 0.1);
-          color: #00ff41;
+          border: 2px solid #6b7280;
+          background: rgba(0, 0, 0, 0.3);
+          color: #d1d5db;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -643,8 +646,9 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         }
         
         .play-pause-btn:hover:not(:disabled) {
-          background: rgba(0, 255, 65, 0.2);
-          box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
+          background: rgba(0, 0, 0, 0.5);
+          border-color: #9ca3af;
+          box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
         }
         
         .play-pause-btn:disabled {
@@ -660,7 +664,7 @@ export const TacticalAudioPlayer = ({ audioSrc, title = "Mission Audio" }: Tacti
         .waveform-container {
           flex: 1;
           height: 80px;
-          border: 1px solid rgba(0, 255, 65, 0.3);
+          border: 1px solid #4b5563;
           border-radius: 8px;
           background: rgba(0, 0, 0, 0.8);
           overflow: hidden;
